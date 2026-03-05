@@ -29,10 +29,15 @@ import { Input } from "@/components/ui/Input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { complaintAPI } from "@/api";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/context/ToastContext";
+import { FeedbackForm } from "@/components/FeedbackForm";
+import { AttachmentUpload } from "@/components/AttachmentUpload";
+import { InternalNotes } from "@/components/InternalNotes";
 
 export default function ComplaintDetailPage() {
   const { id } = useParams();
   const { user: currentUser } = useAuth();
+  const { showToast } = useToast();
   const [complaint, setComplaint] = useState(null);
   const [loading, setLoading] = useState(true);
   const [staffList, setStaffList] = useState([]);
@@ -1296,6 +1301,45 @@ export default function ComplaintDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Attachment Upload Section */}
+      {(currentUser?.role === 'complainant' || currentUser?.role === 'admin' || currentUser?.role === 'manager' || currentUser?.role === 'staff') && (
+        <AttachmentUpload
+          onFilesSelected={(files) => {
+            // Handle file selection
+            console.log('Files selected:', files);
+            showToast('Files ready to upload', 'success');
+          }}
+          maxFiles={5}
+          maxSize={10485760}
+        />
+      )}
+
+      {/* Internal Notes Section */}
+      {(currentUser?.role === 'admin' || currentUser?.role === 'manager' || currentUser?.role === 'staff') && (
+        <InternalNotes
+          complaintId={complaint.id}
+          notes={complaint.internalNotes || []}
+          onAddNote={(noteData) => {
+            console.log('Adding note:', noteData);
+            showToast('Internal note added', 'success');
+          }}
+          loading={false}
+          isVisible={true}
+        />
+      )}
+
+      {/* Feedback Section */}
+      {complaint.status === 'Resolved' || complaint.status === 'Closed' ? (
+        <FeedbackForm
+          complaintId={complaint.id}
+          onSubmit={(feedbackData) => {
+            console.log('Submitting feedback:', feedbackData);
+            showToast('Thank you for your feedback!', 'success');
+          }}
+          loading={feedbackLoading}
+        />
+      ) : null}
 
       {/* Image Modal */}
       {selectedImage && (

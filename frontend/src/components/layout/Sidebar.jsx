@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Menu, X, Home, FileText, BarChart3, Settings, Users } from 'lucide-react'
+import { Home, FileText, BarChart3, Settings, Users, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
 
@@ -28,57 +28,90 @@ const menuItems = {
   ],
 }
 
-export function Sidebar() {
-  const [open, setOpen] = useState(true)
+export function Sidebar({ open, onClose }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
   const items = user ? menuItems[user.role] || menuItems.complainant : []
 
+  const handleNavigation = (path) => {
+    navigate(path)
+    onClose()
+  }
+
   return (
     <>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 md:hidden z-30"
-      >
-        {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </Button>
+      {/* Mobile Overlay */}
+      {open && (
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm md:hidden z-30 transition-opacity"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
-      {open && <div className="fixed inset-0 bg-black/50 md:hidden z-20" onClick={() => setOpen(false)} />}
-
+      {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-full w-64 bg-card border-r border-border transition-transform duration-300 z-30 md:static md:translate-x-0 ${
+        className={`fixed left-0 top-0 h-screen w-72 bg-card border-r border-border shadow-lg transition-transform duration-300 ease-in-out z-40 md:static md:translate-x-0 overflow-y-auto ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="p-6 border-b border-border">
-          <h2 className="text-lg font-semibold">Menu</h2>
+        {/* Header */}
+        <div className="sticky top-0 bg-card border-b border-border p-5 flex items-center justify-between md:justify-start">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/70 rounded-lg flex items-center justify-center shadow-md">
+              <span className="text-white font-bold text-sm">CR</span>
+            </div>
+            <h2 className="text-lg font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Menu
+            </h2>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="md:hidden"
+          >
+            <X className="w-5 h-5" />
+          </Button>
         </div>
 
-        <nav className="p-4 space-y-2">
+        {/* Navigation Items */}
+        <nav className="p-4 space-y-1">
           {items.map((item) => {
             const Icon = item.icon
             const isActive = location.pathname === item.path
+
             return (
               <Button
                 key={item.path}
                 variant={isActive ? 'default' : 'ghost'}
-                className="w-full justify-start gap-3 transition-smooth"
-                onClick={() => {
-                  navigate(item.path)
-                  setOpen(false)
-                }}
+                className={`w-full justify-start gap-4 px-4 py-2.5 h-auto text-sm font-medium transition-all duration-200 ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground shadow-md'
+                    : 'hover:bg-muted/60 text-foreground hover:translate-x-1'
+                }`}
+                onClick={() => handleNavigation(item.path)}
               >
-                <Icon className="w-5 h-5" />
-                <span>{item.label}</span>
+                <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
+                <span className="flex-1 text-left">{item.label}</span>
+                {isActive && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary-foreground ml-auto" />
+                )}
               </Button>
             )
           })}
         </nav>
+
+        {/* Footer */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-card/50 backdrop-blur-sm">
+          <p className="text-xs text-muted-foreground text-center">
+            Complaint Resolution System
+          </p>
+        </div>
       </aside>
     </>
   )
 }
+

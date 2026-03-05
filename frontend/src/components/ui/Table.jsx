@@ -2,14 +2,14 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 const Table = React.forwardRef(({ className, ...props }, ref) =>
-  <div className="relative w-full overflow-auto">
-    <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
+  <div className="relative w-full overflow-auto [-webkit-overflow-scrolling:touch]">
+    <table ref={ref} className={cn("w-full caption-bottom text-sm sm:text-base", className)} {...props} />
   </div>
 )
 Table.displayName = "Table"
 
 const TableHeader = React.forwardRef(({ className, ...props }, ref) =>
-  <thead ref={ref} className={cn("border-b border-border bg-muted/50 [&_tr]:border-b", className)} {...props} />
+  <thead ref={ref} className={cn("border-b border-border bg-muted/50 [&_tr]:border-b sticky top-0 z-10", className)} {...props} />
 )
 TableHeader.displayName = "TableHeader"
 
@@ -24,17 +24,17 @@ const TableFooter = React.forwardRef(({ className, ...props }, ref) =>
 TableFooter.displayName = "TableFooter"
 
 const TableRow = React.forwardRef(({ className, ...props }, ref) =>
-  <tr ref={ref} className={cn("border-b border-border transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted", className)} {...props} />
+  <tr ref={ref} className={cn("border-b border-border transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted min-h-11", className)} {...props} />
 )
 TableRow.displayName = "TableRow"
 
 const TableHead = React.forwardRef(({ className, ...props }, ref) =>
-  <th ref={ref} className={cn("h-12 px-4 text-left align-middle font-semibold text-muted-foreground [&:has([role=checkbox])]:pr-0", className)} {...props} />
+  <th ref={ref} className={cn("h-12 px-3 sm:px-4 py-2 sm:py-3 text-left align-middle font-semibold text-muted-foreground [&:has([role=checkbox])]:pr-0 text-xs sm:text-sm", className)} {...props} />
 )
 TableHead.displayName = "TableHead"
 
 const TableCell = React.forwardRef(({ className, ...props }, ref) =>
-  <td ref={ref} className={cn("px-4 py-3 align-middle [&:has([role=checkbox])]:pr-0", className)} {...props} />
+  <td ref={ref} className={cn("px-3 sm:px-4 py-2 sm:py-3 align-middle [&:has([role=checkbox])]:pr-0 text-xs sm:text-sm", className)} {...props} />
 )
 TableCell.displayName = "TableCell"
 

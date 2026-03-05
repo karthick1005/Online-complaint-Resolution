@@ -111,4 +111,14 @@ export const analyticsAPI = {
   getDashboardStats: () => api.get('/analytics/dashboard/stats')
 };
 
+export const userAPI = {
+  getAllUsers: (filters = {}) => api.get('/users', { params: filters }),
+  getUserById: (id) => api.get(`/users/${id}`),
+  updateUser: (id, data) => api.put(`/users/${id}`, data),
+  deleteUser: (id) => api.delete(`/users/${id}`),
+  changePassword: (data) => api.post('/users/change-password', data),
+  toggleUserStatus: (id) => api.post(`/users/${id}/toggle-status`),
+  getDepartments: () => api.get('/users/departments/list')
+};
+
 export default api;
