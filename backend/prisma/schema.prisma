@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ USERS ============
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  phone         String?
+  passwordHash  String   @map("password_hash")
+  role          Role     @default(complainant)
+  departmentId  String?  @map("department_id")
+  department    Department? @relation(fields: [departmentId], references: [id])
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  complaintsCreated  Complaint[] @relation("ComplainantRelation")
+  complaintAssignedTo Complaint[] @relation("AssignedStaffRelation")
+  historyUpdates     ComplaintHistory[]
+  feedbacks          Feedback[]
+  attachments        Attachment[]
+
+  @@map("users")
+}
+
+enum Role {
+  admin
+  department_manager
+  staff
+  complainant
+  guest
+}
+
+// ============ DEPARTMENTS ============
+model Department {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  users       User[]
+  categories  Category[]
+  complaints  Complaint[]
+
+  @@map("departments")
+}
+
+// ============ CATEGORIES ============
+model Category {
+  id              String   @id @default(cuid())
+  name            String
+  departmentId    String   @map("department_id")
+  department      Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  defaultPriority Priority @default(Medium) @map("default_priority")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  complaints Complaint[]
+
+  @@map("categories")
+}
+
+// ============ COMPLAINTS ============
+model Complaint {
+  id              String   @id @default(cuid())
+  complaintCode   String   @unique @map("complaint_code")
+  userId          String   @map("user_id")
+  user            User     @relation("ComplainantRelation", fields: [userId], references: [id])
+  departmentId    String   @map("department_id")
+  department      Department @relation(fields: [departmentId], references: [id])
+  categoryId      String   @map("category_id")
+  category        Category @relation(fields: [categoryId], references: [id])
+  title           String
+  description     String
+  priority        Priority @default(Medium)
+  status          Status   @default(Registered)
+  latitude        Float?
+  longitude       Float?
+  address         String?
+  assignedToId    String?  @map("assigned_to")
+  assignedTo      User?    @relation("AssignedStaffRelation", fields: [assignedToId], references: [id])
+  slaDeadline     DateTime? @map("sla_deadline")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  history         ComplaintHistory[]
+  attachments     Attachment[]
+  feedback        Feedback?
+
+  @@map("complaints")
+}
+
+enum Priority {
+  Low
+  Medium
+  High
+  Critical
+}
+
+enum Status {
+  Registered
+  Assigned
+  InProgress
+  Resolved
+  Closed
+  Escalated
+}
+
+// ============ COMPLAINT HISTORY ============
+model ComplaintHistory {
+  id            String   @id @default(cuid())
+  complaintId   String   @map("complaint_id")
+  complaint     Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  status        Status
+  comment       String?
+  updatedBy     String   @map("updated_by")
+  updatedByUser User     @relation(fields: [updatedBy], references: [id])
+  isInternalNote Boolean @default(false) @map("is_internal_note")
+  createdAt     DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  files         StatusUpdateFile[]
+
+  @@map("complaint_history")
+}
+
+// ============ STATUS UPDATE FILES ============
+model StatusUpdateFile {
+  id          String   @id @default(cuid())
+  historyId   String   @map("history_id")
+  history     ComplaintHistory @relation(fields: [historyId], references: [id], onDelete: Cascade)
+  filePath    String   @map("file_path")
+  fileType    String   @map("file_type")
+  fileSize    Int?     @map("file_size")
+  fileName    String   @map("file_name")
+  uploadedAt  DateTime @default(now()) @map("uploaded_at")
+
+  @@map("status_update_files")
+}
+
+// ============ ATTACHMENTS ============
+model Attachment {
+  id          String   @id @default(cuid())
+  complaintId String   @map("complaint_id")
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  filePath    String   @map("file_path")
+  fileType    String   @map("file_type")
+  fileSize    Int?     @map("file_size")
+  uploadedBy  String?  @map("uploaded_by")
+  uploadedByUser User?  @relation(fields: [uploadedBy], references: [id])
+  uploadedAt  DateTime @default(now()) @map("uploaded_at")
+
+  @@map("attachments")
+}
+
+// ============ FEEDBACK ============
+model Feedback {
+  id          String   @id @default(cuid())
+  complaintId String   @unique @map("complaint_id")
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id])
+  rating      Int      @default(3) // 1-5 stars
+  comment     String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("feedback")
+}
