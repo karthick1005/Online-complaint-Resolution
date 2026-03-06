@@ -112,6 +112,7 @@ export const analyticsAPI = {
 };
 
 export const userAPI = {
+  createUser: (data) => api.post('/users', data),
   getAllUsers: (filters = {}) => api.get('/users', { params: filters }),
   getUserById: (id) => api.get(`/users/${id}`),
   updateUser: (id, data) => api.put(`/users/${id}`, data),

@@ -1,52 +1,43 @@
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcrypt');
-
-const prisma = new PrismaClient();
+const userService = require('../services/userService');
 
 const userController = {
+  // Create new user (admin only)
+  async createUser(req, res) {
+    try {
+      const { name, email, phone, password, role, departmentId } = req.body;
+
+      // Validate required fields
+      if (!name || !email || !password || !role) {
+        return res.status(400).json({ 
+          error: 'Name, email, password, and role are required' 
+        });
+      }
+
+      const user = await userService.createUser({
+        name,
+        email,
+        phone,
+        password,
+        role,
+        departmentId
+      });
+
+      res.status(201).json({
+        message: 'User created successfully',
+        user
+      });
+    } catch (error) {
+      if (error.message.includes('already exists')) {
+        return res.status(400).json({ error: error.message });
+      }
+      res.status(400).json({ error: error.message });
+    }
+  },
+
   // Get all users (admin only)
   async getAllUsers(req, res) {
     try {
-      const { search, role, status } = req.query;
-      const filters = {};
-
-      if (role && role !== 'all') {
-        filters.role = role;
-      }
-
-      if (status === 'active') {
-        filters.isActive = true;
-      } else if (status === 'inactive') {
-        filters.isActive = false;
-      }
-
-      let users = await prisma.user.findMany({
-        where: filters,
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-          department: {
-            select: { name: true }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-
-      // Search filter
-      if (search) {
-        const searchLower = search.toLowerCase();
-        users = users.filter(u =>
-          u.name.toLowerCase().includes(searchLower) ||
-          u.email.toLowerCase().includes(searchLower) ||
-          (u.phone && u.phone.includes(search))
-        );
-      }
-
+      const users = await userService.getAllUsers(req.query);
       res.json({
         data: users,
         total: users.length
@@ -60,30 +51,10 @@ const userController = {
   async getUserById(req, res) {
     try {
       const { id } = req.params;
-      const user = await prisma.user.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-          departmentId: true,
-          department: {
-            select: { id: true, name: true }
-          }
-        }
-      });
-
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-
+      const user = await userService.getUserById(id);
       res.json(user);
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      res.status(404).json({ error: error.message });
     }
   },
 
@@ -102,29 +73,10 @@ const userController = {
       if (name) updateData.name = name;
       if (phone !== undefined) updateData.phone = phone;
       if (isActive !== undefined) updateData.isActive = isActive;
+      if (role) updateData.role = role;
+      if (departmentId !== undefined) updateData.departmentId = departmentId;
 
-      // Only admin can change role and department
-      if (req.user.role === 'admin') {
-        if (role) updateData.role = role;
-        if (departmentId !== undefined) updateData.departmentId = departmentId;
-      }
-
-      const user = await prisma.user.update({
-        where: { id },
-        data: updateData,
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-          department: {
-            select: { name: true }
-          }
-        }
-      });
+      const user = await userService.updateUser(id, updateData, req.user);
 
       res.json({
         message: 'User updated successfully',
@@ -139,23 +91,7 @@ const userController = {
   async deleteUser(req, res) {
     try {
       const { id } = req.params;
-
-      // Prevent deleting yourself
-      if (req.user.id === id) {
-        return res.status(400).json({ error: 'Cannot delete your own account' });
-      }
-
-      // Get user before deletion
-      const user = await prisma.user.findUnique({ where: { id } });
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-
-      // Delete user and cascade
-      await prisma.user.delete({
-        where: { id }
-      });
-
+      await userService.deleteUser(id, req.user.id);
       res.json({ message: 'User deleted successfully' });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -172,24 +108,7 @@ const userController = {
         return res.status(400).json({ error: 'Passwords do not match' });
       }
 
-      const user = await prisma.user.findUnique({ where: { id: userId } });
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-
-      // Verify current password
-      const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
-      if (!isValid) {
-        return res.status(401).json({ error: 'Current password is incorrect' });
-      }
-
-      // Hash new password
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-      await prisma.user.update({
-        where: { id: userId },
-        data: { passwordHash: hashedPassword }
-      });
+      await userService.changePassword(userId, currentPassword, newPassword);
 
       res.json({ message: 'Password changed successfully' });
     } catch (error) {
@@ -200,15 +119,7 @@ const userController = {
   // Get departments
   async getDepartments(req, res) {
     try {
-      const departments = await prisma.department.findMany({
-        select: {
-          id: true,
-          name: true,
-          description: true
-        },
-        orderBy: { name: 'asc' }
-      });
-
+      const departments = await userService.getDepartments();
       res.json({ data: departments });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -219,28 +130,7 @@ const userController = {
   async toggleUserStatus(req, res) {
     try {
       const { id } = req.params;
-
-      const user = await prisma.user.findUnique({ where: { id } });
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-
-      const updatedUser = await prisma.user.update({
-        where: { id },
-        data: { isActive: !user.isActive },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-          department: {
-            select: { name: true }
-          }
-        }
-      });
+      const updatedUser = await userService.toggleUserStatus(id, req.user.id);
 
       res.json({
         message: `User ${updatedUser.isActive ? 'activated' : 'deactivated'} successfully`,

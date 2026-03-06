@@ -113,28 +113,38 @@ export default function ComplaintDetailPage() {
       if (!complaint?.history) return;
 
       const previews = {};
+      
+      // Collect all image files that need fetching
+      const imageFiles = [];
       for (const entry of complaint.history) {
         if (entry.files && entry.files.length > 0) {
           for (const file of entry.files) {
             if (file.fileType?.startsWith("image/")) {
-              try {
-                // Download file as blob and create object URL
-                const fileResponse = await complaintAPI.downloadStatusFile(file.id);
-                // axios returns response.data as the blob when responseType: 'blob'
-                const blob = fileResponse.data || fileResponse;
-                if (blob && blob instanceof Blob) {
-                  const url = URL.createObjectURL(blob);
-                  previews[file.id] = url;
-                } else {
-                  console.warn("Invalid blob for file:", file.id);
-                }
-              } catch (err) {
-                console.error("Failed to load timeline preview:", err);
-              }
+              imageFiles.push(file);
             }
           }
         }
       }
+      
+      // Fetch all images in parallel
+      if (imageFiles.length > 0) {
+        const downloadPromises = imageFiles.map(file =>
+          complaintAPI.downloadStatusFile(file.id)
+            .then(fileResponse => {
+              const blob = fileResponse.data || fileResponse;
+              if (blob && blob instanceof Blob) {
+                const url = URL.createObjectURL(blob);
+                previews[file.id] = url;
+              } else {
+                console.warn("Invalid blob for file:", file.id);
+              }
+            })
+            .catch(err => console.error("Failed to load timeline preview:", err))
+        );
+        
+        await Promise.all(downloadPromises);
+      }
+      
       setTimelineFilePreviews(previews);
     };
 
@@ -167,21 +177,27 @@ export default function ComplaintDetailPage() {
         console.log("Fetched attachments:", attachmentsData);
         setAttachments(attachmentsData);
 
-        // Generate previews for images
+        // Generate previews for images - fetch in parallel
+        const imageAttachments = attachmentsData.filter(a => 
+          a.fileType?.startsWith("image/")
+        );
+        
         const previews = {};
-        for (const attachment of attachmentsData) {
-          if (attachment.fileType?.startsWith("image/")) {
-            try {
-              const fileResponse = await complaintAPI.downloadAttachment(
-                attachment.id,
-              );
-              const url = URL.createObjectURL(fileResponse.data);
-              previews[attachment.id] = url;
-            } catch (err) {
-              console.error("Failed to generate preview for", attachment.id);
-            }
-          }
+        if (imageAttachments.length > 0) {
+          const previewPromises = imageAttachments.map(attachment =>
+            complaintAPI.downloadAttachment(attachment.id)
+              .then(fileResponse => {
+                const url = URL.createObjectURL(fileResponse.data);
+                previews[attachment.id] = url;
+              })
+              .catch(err => {
+                console.error("Failed to generate preview for", attachment.id);
+              })
+          );
+          
+          await Promise.all(previewPromises);
         }
+        
         setImagePreviews(previews);
       } catch (error) {
         console.error("Failed to fetch attachments:", error);
@@ -1303,7 +1319,7 @@ export default function ComplaintDetailPage() {
       )}
 
       {/* Attachment Upload Section */}
-      {(currentUser?.role === 'complainant' || currentUser?.role === 'admin' || currentUser?.role === 'manager' || currentUser?.role === 'staff') && (
+      {(currentUser?.role === 'complainant') && (
         <AttachmentUpload
           onFilesSelected={(files) => {
             // Handle file selection
@@ -1316,7 +1332,7 @@ export default function ComplaintDetailPage() {
       )}
 
       {/* Internal Notes Section */}
-      {(currentUser?.role === 'admin' || currentUser?.role === 'manager' || currentUser?.role === 'staff') && (
+      {/* {(currentUser?.role === 'admin' || currentUser?.role === 'manager' || currentUser?.role === 'staff') && (
         <InternalNotes
           complaintId={complaint.id}
           notes={complaint.internalNotes || []}
@@ -1327,10 +1343,10 @@ export default function ComplaintDetailPage() {
           loading={false}
           isVisible={true}
         />
-      )}
+      )} */}
 
       {/* Feedback Section */}
-      {complaint.status === 'Resolved' || complaint.status === 'Closed' ? (
+      {complaint.status === 'Resolved' || complaint.status === 'Closed' && currentUser?.role === 'complainant' ? (
         <FeedbackForm
           complaintId={complaint.id}
           onSubmit={(feedbackData) => {

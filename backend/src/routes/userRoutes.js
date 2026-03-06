@@ -10,6 +10,22 @@ const router = express.Router();
 // All user routes require authentication
 router.use(authMiddleware);
 
+// Create user (admin only)
+router.post(
+  '/',
+  rbacMiddleware(['admin']),
+  [
+    body('name').notEmpty().withMessage('Name is required'),
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('phone').optional().isMobilePhone().withMessage('Valid phone is required'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('role').notEmpty().isIn(['admin', 'department_manager', 'staff', 'complainant']).withMessage('Valid role is required'),
+    body('departmentId').optional()
+  ],
+  validationMiddleware,
+  userController.createUser
+);
+
 // Change password (must be before /:id routes)
 router.post(
   '/change-password',

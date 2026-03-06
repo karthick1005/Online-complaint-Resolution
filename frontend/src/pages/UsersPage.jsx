@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, Search, Filter } from 'lucide-react'
+import { Plus, Edit2, Trash2, Search, Filter, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -29,13 +29,35 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
+  const [departments, setDepartments] = useState([])
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [formLoading, setFormLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'complainant',
+    departmentId: ''
+  })
+  const [formErrors, setFormErrors] = useState({})
   const { showToast } = useToast()
   const { user: currentUser } = useAuth()
   const itemsPerPage = 10
 
   useEffect(() => {
     fetchUsers()
+    fetchDepartments()
   }, [roleFilter])
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await userAPI.getDepartments()
+      setDepartments(response.data?.data || [])
+    } catch (error) {
+      console.error('Failed to load departments:', error)
+    }
+  }
 
   useEffect(() => {
     setCurrentPage(1)
@@ -87,6 +109,69 @@ export default function UsersPage() {
     }
   }
 
+  const validateForm = () => {
+    const errors = {}
+    if (!formData.name.trim()) errors.name = 'Name is required'
+    if (!formData.email.trim()) errors.email = 'Email is required'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.email = 'Valid email is required'
+    if (!formData.password) errors.password = 'Password is required'
+    else if (formData.password.length < 6) errors.password = 'Password must be at least 6 characters'
+    if (!formData.role) errors.role = 'Role is required'
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleAddUser = async (e) => {
+    e.preventDefault()
+    if (!validateForm()) return
+
+    try {
+      setFormLoading(true)
+      const userData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        role: formData.role,
+        departmentId: formData.departmentId || undefined
+      }
+      
+      const response = await userAPI.createUser(userData)
+      setUsers((prev) => [response.data.user, ...prev])
+      showToast('User created successfully', 'success')
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        password: '',
+        role: 'complainant',
+        departmentId: ''
+      })
+      setFormErrors({})
+      setShowAddForm(false)
+    } catch (error) {
+      showToast(error.response?.data?.error || 'Failed to create user', 'error')
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }))
+    if (formErrors[name]) {
+      setFormErrors((prev) => ({
+        ...prev,
+        [name]: ''
+      }))
+    }
+  }
+
   // Filter and search
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
@@ -122,7 +207,10 @@ export default function UsersPage() {
           <h1 className="text-3xl font-bold">Users Management</h1>
           <p className="text-muted-foreground mt-1">Manage system users and their roles</p>
         </div>
-        <Button className="gap-2 w-full sm:w-auto">
+        <Button 
+          className="gap-2 w-full sm:w-auto"
+          onClick={() => setShowAddForm(true)}
+        >
           <Plus className="w-4 h-4" />
           Add User
         </Button>
@@ -251,6 +339,152 @@ export default function UsersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Add User Modal */}
+      {showAddForm && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Add New User</CardTitle>
+                <CardDescription>Create a new user account</CardDescription>
+              </div>
+              <button
+                onClick={() => setShowAddForm(false)}
+                className="h-6 w-6 rounded-md hover:bg-muted flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </CardHeader>
+
+            <CardContent>
+              <form onSubmit={handleAddUser} className="space-y-4">
+                {/* Name */}
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Name <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    name="name"
+                    value={formData.name}
+                    onChange={handleFormChange}
+                    placeholder="Full name"
+                    className={formErrors.name ? 'border-red-500' : ''}
+                  />
+                  {formErrors.name && <p className="text-xs text-red-500 mt-1">{formErrors.name}</p>}
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleFormChange}
+                    placeholder="user@example.com"
+                    className={formErrors.email ? 'border-red-500' : ''}
+                  />
+                  {formErrors.email && <p className="text-xs text-red-500 mt-1">{formErrors.email}</p>}
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Phone (Optional)
+                  </label>
+                  <Input
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleFormChange}
+                    placeholder="+1234567890"
+                  />
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Password <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleFormChange}
+                    placeholder="At least 6 characters"
+                    className={formErrors.password ? 'border-red-500' : ''}
+                  />
+                  {formErrors.password && <p className="text-xs text-red-500 mt-1">{formErrors.password}</p>}
+                </div>
+
+                {/* Role */}
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Role <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleFormChange}
+                    className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="complainant">Complainant</option>
+                    <option value="staff">Staff</option>
+                    <option value="department_manager">Manager</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                  {formErrors.role && <p className="text-xs text-red-500 mt-1">{formErrors.role}</p>}
+                </div>
+
+                {/* Department */}
+                {(formData.role === 'staff' || formData.role === 'department_manager') && (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Department (Optional)
+                    </label>
+                    <select
+                      name="departmentId"
+                      value={formData.departmentId}
+                      onChange={handleFormChange}
+                      className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="">Select Department</option>
+                      {departments.map((dept) => (
+                        <option key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Buttons */}
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowAddForm(false)}
+                    className="flex-1"
+                    disabled={formLoading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1"
+                    disabled={formLoading}
+                  >
+                    {formLoading ? 'Creating...' : 'Create User'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

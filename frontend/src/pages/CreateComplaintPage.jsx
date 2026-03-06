@@ -33,15 +33,8 @@ export default function CreateComplaintPage() {
     const fetchCategories = async () => {
       try {
         setCategoriesLoading(true)
-        const response = await fetch('/api/complaints/meta/categories', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
-          }
-        })
-        const json = await response.json()
-        if (json.data) {
-          setCategories(json.data)
-        }
+        const response = await complaintAPI.getCategories()
+        setCategories(response.data.data || [])
       } catch (error) {
         console.error('Failed to fetch categories:', error)
         setCategories([])
