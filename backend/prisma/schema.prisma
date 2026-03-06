@@ -31,6 +31,12 @@ model User {
   feedbacks          Feedback[]
   attachments        Attachment[]
 
+  // Indexes for query performance
+  @@index([email])
+  @@index([departmentId])
+  @@index([role])
+  @@index([isActive])
+  @@index([createdAt])
   @@map("users")
 }
 
@@ -55,6 +61,9 @@ model Department {
   categories  Category[]
   complaints  Complaint[]
 
+  // Indexes for query performance
+  @@index([name])
+  @@index([createdAt])
   @@map("departments")
 }
 
@@ -70,6 +79,9 @@ model Category {
   // Relations
   complaints Complaint[]
 
+  // Indexes for query performance
+  @@index([departmentId])
+  @@index([name])
   @@map("categories")
 }
 
@@ -101,6 +113,18 @@ model Complaint {
   attachments     Attachment[]
   feedback        Feedback?
 
+  // Indexes for query performance (most critical table)
+  @@index([complaintCode])
+  @@index([userId])
+  @@index([departmentId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([priority])
+  @@index([assignedToId])
+  @@index([createdAt])
+  @@index([slaDeadline])
+  @@index([status, departmentId])  // Composite index for common filters
+  @@index([status, priority])      // Composite index for sorting/filtering
   @@map("complaints")
 }
 
@@ -135,6 +159,11 @@ model ComplaintHistory {
   // Relations
   files         StatusUpdateFile[]
 
+  // Indexes for query performance
+  @@index([complaintId])
+  @@index([updatedBy])
+  @@index([createdAt])
+  @@index([isInternalNote])
   @@map("complaint_history")
 }
 
@@ -149,6 +178,7 @@ model StatusUpdateFile {
   fileName    String   @map("file_name")
   uploadedAt  DateTime @default(now()) @map("uploaded_at")
 
+  @@index([historyId])
   @@map("status_update_files")
 }
 
@@ -164,6 +194,8 @@ model Attachment {
   uploadedByUser User?  @relation(fields: [uploadedBy], references: [id])
   uploadedAt  DateTime @default(now()) @map("uploaded_at")
 
+  @@index([complaintId])
+  @@index([uploadedBy])
   @@map("attachments")
 }
 
@@ -178,5 +210,7 @@ model Feedback {
   comment     String?
   createdAt   DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([rating])
   @@map("feedback")
 }

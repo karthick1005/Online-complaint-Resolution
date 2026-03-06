@@ -32,9 +32,13 @@ const LoginPage = () => {
 
   const demoAccounts = [
     { email: 'admin@complaintresolution.com', password: 'Admin@123', role: 'Admin' },
-    { email: 'manager@complaintresolution.com', password: 'Manager@123', role: 'Manager' },
-    { email: 'staff@complaintresolution.com', password: 'Staff@123', role: 'Staff' },
-    { email: 'user@example.com', password: 'User@123', role: 'User' },
+    { email: 'manager.infra@complaintresolution.com', password: 'Manager@123', role: 'Manager (Infrastructure)' },
+    { email: 'manager.health@complaintresolution.com', password: 'Manager@123', role: 'Manager (Health)' },
+    { email: 'manager.education@complaintresolution.com', password: 'Manager@123', role: 'Manager (Education)' },
+    { email: 'staff.infra@complaintresolution.com', password: 'Staff@123', role: 'Staff (Infrastructure)' },
+    { email: 'staff.health@complaintresolution.com', password: 'Staff@123', role: 'Staff (Health)' },
+    { email: 'user1@example.com', password: 'User@123', role: 'Complainant' },
+    { email: 'user2@example.com', password: 'User@123', role: 'Complainant' },
   ]
 
   const useDemoCredentials = (demoEmail, demoPassword) => {

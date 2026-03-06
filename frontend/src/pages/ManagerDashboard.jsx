@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { AlertCircle, CheckCircle, Clock, TrendingUp } from 'lucide-react'
+import { AlertCircle, CheckCircle, Clock, TrendingUp, Users, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -22,9 +22,13 @@ export default function ManagerDashboard() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        // Fetch complaints
-        const complaintParams = {}
+        
+        // Fetch complaints for this manager's department
+        const complaintParams = {
+          departmentId: user?.departmentId // Manager only sees their department
+        }
         if (filterStatus !== 'all') complaintParams.status = filterStatus
+        
         const complaintRes = await complaintAPI.getComplaints(complaintParams)
         setComplaints(complaintRes.data.data || [])
 
@@ -38,8 +42,223 @@ export default function ManagerDashboard() {
       }
     }
 
-    fetchData()
-  }, [filterStatus])
+    if (user?.departmentId) {
+      fetchData()
+    }
+  }, [filterStatus, user?.departmentId])
+
+  const filteredComplaints = complaints.filter(
+    (c) =>
+      c.complaintCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.title.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const getStatusColor = (status) => {
+    const colors = {
+      Registered: 'registered',
+      Assigned: 'assigned',
+      InProgress: 'inprogress',
+      Resolved: 'resolved',
+      Closed: 'closed',
+      Escalated: 'escalated',
+    }
+    return colors[status] || 'default'
+  }
+
+  const getPriorityColor = (priority) => {
+    const colors = {
+      Critical: 'critical',
+      High: 'high',
+      Medium: 'medium',
+      Low: 'low',
+    }
+    return colors[priority] || 'default'
+  }
+
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+
+  if (loading) {
+    return <div className="text-center py-12">Loading...</div>
+  }
+
+  // Count different statuses
+  const statusCounts = {
+    registered: complaints.filter(c => c.status === 'Registered').length,
+    assigned: complaints.filter(c => c.status === 'Assigned').length,
+    inProgress: complaints.filter(c => c.status === 'InProgress').length,
+    resolved: complaints.filter(c => c.status === 'Resolved').length,
+    closed: complaints.filter(c => c.status === 'Closed').length,
+    escalated: complaints.filter(c => c.status === 'Escalated').length,
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-semibold">🏢 Department Manager Dashboard</h1>
+        <p className="text-muted-foreground mt-1">Manage and track complaints in your department</p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+              <span>Total Complaints</span>
+              <BarChart3 className="w-4 h-4" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{complaints.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">In your department</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+              <span>Pending</span>
+              <Clock className="w-4 h-4 text-orange-600" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{statusCounts.registered + statusCounts.assigned}</div>
+            <p className="text-xs text-muted-foreground mt-1">Registered & Assigned</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+              <span>In Progress</span>
+              <TrendingUp className="w-4 h-4 text-blue-600" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{statusCounts.inProgress}</div>
+            <p className="text-xs text-muted-foreground mt-1">Being worked on</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+              <span>Resolved</span>
+              <CheckCircle className="w-4 h-4 text-green-600" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{statusCounts.resolved + statusCounts.closed}</div>
+            <p className="text-xs text-muted-foreground mt-1">Completed</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Complaints Table */}
+      <Card>
+        <CardHeader className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex-1">
+              <CardTitle>Recent Complaints</CardTitle>
+              <CardDescription>Latest complaints in your department</CardDescription>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="flex-1">
+              <Input
+                placeholder="Search complaints..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Status Filter</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg bg-background text-sm"
+              >
+                <option value="all">All Statuses</option>
+                <option value="Registered">Registered</option>
+                <option value="Assigned">Assigned</option>
+                <option value="InProgress">In Progress</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Closed">Closed</option>
+                <option value="Escalated">Escalated</option>
+              </select>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          {filteredComplaints.length === 0 ? (
+            <div className="py-12 text-center">
+              <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-40" />
+              <p className="text-muted-foreground">No complaints found in your department</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Assigned To</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredComplaints.slice(0, 10).map((complaint) => (
+                    <TableRow key={complaint.id} className="hover:bg-muted/50">
+                      <TableCell className="font-mono text-sm font-semibold">
+                        {complaint.complaintCode}
+                      </TableCell>
+                      <TableCell className="font-medium max-w-xs truncate">
+                        {complaint.title}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={complaint.priority === 'Critical' ? 'critical' : complaint.priority === 'High' ? 'high' : 'medium'}>
+                          {complaint.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusColor(complaint.status)}>
+                          {complaint.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {complaint.assignedTo?.name || 'Unassigned'}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {formatDate(complaint.createdAt)}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/complaints/${complaint.id}`)}
+                        >
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
 
   const filteredComplaints = complaints.filter(
     (c) =>

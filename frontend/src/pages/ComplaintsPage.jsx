@@ -15,16 +15,18 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
-import { complaintAPI } from '@/api'
+import { complaintAPI, departmentAPI } from '@/api'
 import { Pagination } from '@/components/ui/Pagination'
+import { getDepartmentList } from '@/lib/departments'
 
 export default function ComplaintsPage() {
   const [complaints, setComplaints] = useState([])
+  const [departments, setDepartments] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterPriority, setFilterPriority] = useState('all')
-  const [filterRole, setFilterRole] = useState('all')
+  const [filterDepartment, setFilterDepartment] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const { user } = useAuth()
@@ -32,13 +34,33 @@ export default function ComplaintsPage() {
   const navigate = useNavigate()
   const itemsPerPage = 10
 
+  // Fetch departments on component mount
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const result = await departmentAPI.getDepartments().catch(() => null);
+        if (result?.data) {
+          setDepartments(result.data);
+        } else {
+          // Fallback to local departments data
+          const deptList = getDepartmentList();
+          setDepartments(deptList.map((name, idx) => ({ id: `dept-${idx}`, name })));
+        }
+      } catch (err) {
+        console.error('Failed to fetch departments:', err);
+      }
+    };
+    
+    fetchDepartments();
+  }, []);
+
   useEffect(() => {
     fetchComplaints()
-  }, [filterStatus, filterPriority, filterRole])
+  }, [filterStatus, filterPriority, filterDepartment])
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, filterStatus, filterPriority, filterRole])
+  }, [searchTerm, filterStatus, filterPriority, filterDepartment])
 
   const fetchComplaints = async () => {
     try {
@@ -46,12 +68,13 @@ export default function ComplaintsPage() {
       const params = {}
       if (filterStatus !== 'all') params.status = filterStatus
       if (filterPriority !== 'all') params.priority = filterPriority
+      if (filterDepartment !== 'all') params.departmentId = filterDepartment
+      
       // If user is complainant, show only their complaints
       if (user?.role === 'complainant') {
         params.userId = user.id
-      } else if (filterRole !== 'all') {
-        params.role = filterRole
       }
+      
       const response = await complaintAPI.getComplaints(params)
       setComplaints(response.data.data || [])
     } catch (error) {
@@ -77,14 +100,14 @@ export default function ComplaintsPage() {
     setSearchTerm('')
     setFilterStatus('all')
     setFilterPriority('all')
-    setFilterRole('all')
+    setFilterDepartment('all')
     setCurrentPage(1)
   }
 
   const activeFiltersCount = [
     filterStatus !== 'all',
     filterPriority !== 'all',
-    filterRole !== 'all',
+    filterDepartment !== 'all',
     searchTerm !== '',
   ].filter(Boolean).length
 
@@ -118,8 +141,8 @@ export default function ComplaintsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold">Complaints</h1>
-          <p className="text-muted-foreground mt-1">Manage and track all complaints</p>
+          <h1 className="text-3xl font-semibold">📋 Complaints</h1>
+          <p className="text-muted-foreground mt-1">Manage and track all complaints across departments</p>
         </div>
 
         {user?.role === 'complainant' && (
@@ -172,7 +195,23 @@ export default function ComplaintsPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Department</label>
+              <select
+                value={filterDepartment}
+                onChange={(e) => setFilterDepartment(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg bg-background text-sm"
+              >
+                <option value="all">All Departments</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id || dept.name}>
+                    {dept.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Status</label>
               <select
@@ -204,23 +243,6 @@ export default function ComplaintsPage() {
                 <option value="Low">Low</option>
               </select>
             </div>
-
-            {user?.role !== 'complainant' && (
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Role</label>
-                <select
-                  value={filterRole}
-                  onChange={(e) => setFilterRole(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg bg-background text-sm"
-                >
-                  <option value="all">All Roles</option>
-                  <option value="complainant">By Complainant</option>
-                  <option value="admin">By Admin</option>
-                  <option value="manager">By Manager</option>
-                  <option value="staff">By Staff</option>
-                </select>
-              </div>
-            )}
           </div>
         </CardHeader>
 
@@ -250,6 +272,7 @@ export default function ComplaintsPage() {
                     <TableRow>
                       <TableHead>Code</TableHead>
                       <TableHead>Title</TableHead>
+                      <TableHead>Department</TableHead>
                       <TableHead>Priority</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Date</TableHead>
@@ -261,6 +284,9 @@ export default function ComplaintsPage() {
                       <TableRow key={complaint.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/complaints/${complaint.id}`)}>
                         <TableCell className="font-mono text-sm font-semibold">{complaint.complaintCode}</TableCell>
                         <TableCell className="font-medium">{complaint.title}</TableCell>
+                        <TableCell>
+                          <span className="text-sm">{complaint.department?.name || 'N/A'}</span>
+                        </TableCell>
                         <TableCell>
                           <Badge variant={getPriorityVariant(complaint.priority)}>{complaint.priority}</Badge>
                         </TableCell>
@@ -308,3 +334,5 @@ export default function ComplaintsPage() {
     </div>
   )
 }
+
+

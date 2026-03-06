@@ -73,19 +73,38 @@ const complaintService = {
     if (filters.departmentId) where.departmentId = filters.departmentId;
     if (filters.assignedToId) where.assignedToId = filters.assignedToId;
 
+    // OPTIMIZATION: Minimal select for list view to reduce payload and improve speed
     const complaints = await prisma.complaint.findMany({
       where,
-      include: {
-        user: true,
-        department: true,
-        category: true,
-        assignedTo: true,
-        history: true,
-        attachments: true,
-        feedback: true
+      select: {
+        id: true,
+        complaintCode: true,
+        userId: true,
+        title: true,
+        description: true,
+        priority: true,
+        status: true,
+        departmentId: true,
+        assignedToId: true,
+        createdAt: true,
+        updatedAt: true,
+        user: {
+          select: { id: true, name: true, email: true }
+        },
+        department: {
+          select: { id: true, name: true }
+        },
+        assignedTo: {
+          select: { id: true, name: true, email: true }
+        },
+        attachments: {
+          select: { id: true, filePath: true }
+        }
+        // OPTIMIZATION: Don't include full history in list view
+        // OPTIMIZATION: Don't include feedback in list view
       },
       orderBy: { createdAt: 'desc' },
-      take: filters.limit || 10,
+      take: Math.min(filters.limit || 10, 100),  // Cap at 100 to prevent abuse
       skip: filters.offset || 0
     });
 

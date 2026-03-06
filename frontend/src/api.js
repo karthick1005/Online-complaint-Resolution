@@ -80,7 +80,6 @@ export const complaintAPI = {
   addFeedback: (id, rating, comment) =>
     api.post(`/complaints/${id}/feedback`, { rating, comment }),
   getStaff: () => api.get('/complaints/meta/staff'),
-  getCategories: () => api.get('/complaints/meta/categories'),
   
   // Attachment APIs
   getAttachments: (id) => api.get(`/complaints/${id}/attachments`),
@@ -105,6 +104,17 @@ export const complaintAPI = {
   // Reopen complaint API
   reopenComplaint: (id, reason) =>
     api.post(`/complaints/${id}/reopen`, { reason })
+};
+
+export const departmentAPI = {
+  getDepartments: () => api.get('/departments'),
+  getDepartmentById: (id) => api.get(`/departments/${id}`),
+  getCategoriesByDepartment: (departmentId) => api.get(`/categories?departmentId=${departmentId}`)
+};
+
+export const categoryAPI = {
+  getCategories: () => api.get('/categories'),
+  getCategoriesByDepartment: (departmentId) => api.get(`/categories?departmentId=${departmentId}`)
 };
 
 export const analyticsAPI = {
