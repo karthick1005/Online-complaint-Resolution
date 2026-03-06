@@ -37,7 +37,8 @@ const userController = {
   // Get all users (admin only)
   async getAllUsers(req, res) {
     try {
-      const users = await userService.getAllUsers(req.query);
+      console.log('Current user:', req.user);
+      const users = await userService.getAllUsers(req.query, req.user);
       res.json({
         data: users,
         total: users.length

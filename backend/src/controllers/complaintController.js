@@ -112,6 +112,7 @@ const complaintController = {
           filters.assignedToId = req.user.id
           break
         case 'department_manager':
+          console.log('Department Manager Access - Filtering by department:', req.user.departmentId);
           // Managers see all complaints in their department
           filters.departmentId = req.user.departmentId
           break
@@ -121,11 +122,11 @@ const complaintController = {
         default:
           return res.status(403).json({ error: 'Invalid user role' })
       }
-
+      console.log('Fetching complaints with filters:', filters);
       // Additional filters
       if (status) filters.status = status
       if (priority) filters.priority = priority
-      if (departmentId && (req.user.role === 'admin' || req.user.role === 'department_manager')) {
+      if (departmentId && req.user.role === 'admin' ) {
         filters.departmentId = departmentId
       }
 
@@ -141,12 +142,27 @@ const complaintController = {
       const complaint = await complaintService.getComplaintById(req.params.id);
 
       // RBAC: Check if user has access
-      if (
-        req.user.role !== 'admin' &&
-        req.user.role !== 'department_manager' &&
-        req.user.id !== complaint.userId &&
-        req.user.id !== complaint.assignedToId
-      ) {
+      if (req.user.role === 'admin') {
+        // Admins can see all complaints
+      } else if (req.user.role === 'department_manager') {
+        // Managers can only see complaints from their department
+        if (complaint.departmentId !== req.user.departmentId) {
+          return res.status(403).json({ error: 'Access denied - not your department' });
+        }
+      } else if (req.user.role === 'staff') {
+        // Staff can only see assigned complaints or complaints in their department
+        if (
+          req.user.id !== complaint.assignedToId &&
+          complaint.departmentId !== req.user.departmentId
+        ) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      } else if (req.user.role === 'complainant') {
+        // Complainants can only see their own complaints
+        if (req.user.id !== complaint.userId) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      } else {
         return res.status(403).json({ error: 'Access denied' });
       }
 
@@ -174,7 +190,8 @@ const complaintController = {
         status,
         comment,
         req.user.id,
-        fileData
+        fileData,
+        req.user
       );
 
       res.json({
@@ -192,7 +209,8 @@ const complaintController = {
       const complaint = await complaintService.assignComplaint(
         req.params.id,
         staffId,
-        req.user.id
+        req.user.id,
+        req.user
       );
 
       res.json({
@@ -230,12 +248,19 @@ const complaintController = {
 
   async getStaff(req, res) {
     try {
-      // Get all staff members
+      // Get staff members - restrict to department for managers
+      const where = {
+        role: 'staff',
+        isActive: true
+      };
+
+      // Department managers only see their department's staff
+      if (req.user.role === 'department_manager') {
+        where.departmentId = req.user.departmentId;
+      }
+
       const staff = await prisma.user.findMany({
-        where: {
-          role: 'staff',
-          isActive: true
-        },
+        where,
         select: {
           id: true,
           name: true,
@@ -373,6 +398,13 @@ const complaintController = {
 
       if (!complaint) {
         return res.status(404).json({ error: 'Complaint not found' });
+      }
+
+      // For department managers: verify they can only comment on complaints in their department
+      if (req.user.role === 'department_manager') {
+        if (complaint.departmentId !== req.user.departmentId) {
+          return res.status(403).json({ error: 'You can only comment on complaints from your department' });
+        }
       }
 
       // Create comment (stored as special history entry with type='comment')

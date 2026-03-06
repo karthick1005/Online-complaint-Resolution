@@ -44,7 +44,7 @@ router.get('/departments/list', userController.getDepartments);
 // Get all users (admin only)
 router.get(
   '/',
-  rbacMiddleware(['admin']),
+  rbacMiddleware(['admin',"department_manager"]),
   userController.getAllUsers
 );
 

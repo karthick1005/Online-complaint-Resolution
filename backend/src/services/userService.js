@@ -49,49 +49,61 @@ const userService = {
   },
 
   // Get all users with filtering
-  async getAllUsers(query) {
-    const { search, role, status } = query;
-    const filters = {};
+async getAllUsers(query = {}, currentUser) {
+  const { search, role, status } = query;
 
-    if (role && role !== 'all') {
-      filters.role = role;
-    }
+  const filters = {};
 
-    if (status === 'active') {
-      filters.isActive = true;
-    } else if (status === 'inactive') {
-      filters.isActive = false;
-    }
+  // Exclude current user
+  filters.id = { not: currentUser.id };
 
-    let users = await prisma.user.findMany({
-      where: filters,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        department: {
-          select: { name: true }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+  // Role filter
+  if (role && role !== 'all') {
+    filters.role = role;
+  }
 
-    // Search filter
-    if (search) {
-      const searchLower = search.toLowerCase();
-      users = users.filter(u =>
-        u.name.toLowerCase().includes(searchLower) ||
-        u.email.toLowerCase().includes(searchLower) ||
-        (u.phone && u.phone.includes(search))
-      );
-    }
+  // Status filter
+  if (status === 'active') {
+    filters.isActive = true;
+  } else if (status === 'inactive') {
+    filters.isActive = false;
+  }
 
-    return users;
-  },
+  // Department restriction
+  if (currentUser.role !== 'admin') {
+    filters.departmentId = currentUser.departmentId;
+  }
+
+  // Search filter
+  if (search) {
+    filters.OR = [
+      { name: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
+      { phone: { contains: search } }
+    ];
+  }
+
+  console.log('Fetching users with filters:', filters);
+
+  const users = await prisma.user.findMany({
+    where: filters,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+      department: {
+        select: { name: true }
+      }
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  return users;
+},
 
   // Get single user by ID
   async getUserById(id) {

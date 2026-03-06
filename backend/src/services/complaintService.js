@@ -148,13 +148,20 @@ const complaintService = {
     return complaint;
   },
 
-  async updateComplaintStatus(complaintId, newStatus, comment, updatedBy, fileData = []) {
+  async updateComplaintStatus(complaintId, newStatus, comment, updatedBy, fileData = [], updatedByUser = null) {
     const complaint = await prisma.complaint.findUnique({
       where: { id: complaintId }
     });
 
     if (!complaint) {
       throw new Error('Complaint not found');
+    }
+
+    // For department managers: verify they can only update complaints in their department
+    if (updatedByUser && updatedByUser.role === 'department_manager') {
+      if (complaint.departmentId !== updatedByUser.departmentId) {
+        throw new Error('You can only update complaints from your department');
+      }
     }
 
     const updated = await prisma.complaint.update({
@@ -193,7 +200,24 @@ const complaintService = {
     return updated;
   },
 
-  async assignComplaint(complaintId, staffId, assignedBy) {
+  async assignComplaint(complaintId, staffId, assignedBy, assignedByUser) {
+    // Get complaint first
+    const complaint = await prisma.complaint.findUnique({
+      where: { id: complaintId }
+    });
+
+    if (!complaint) {
+      throw new Error('Complaint not found');
+    }
+
+    // For department managers: verify they can only assign within their department
+    if (assignedByUser.role === 'department_manager') {
+      if (complaint.departmentId !== assignedByUser.departmentId) {
+        throw new Error('You can only assign complaints from your department');
+      }
+    }
+
+    // Get and validate staff member
     const staff = await prisma.user.findUnique({
       where: { id: staffId }
     });
@@ -202,13 +226,20 @@ const complaintService = {
       throw new Error('Invalid staff member');
     }
 
-    const complaint = await prisma.complaint.update({
+    // For department managers: verify staff is from their department
+    if (assignedByUser.role === 'department_manager') {
+      if (staff.departmentId !== assignedByUser.departmentId) {
+        throw new Error('You can only assign to staff from your department');
+      }
+    }
+
+    const updated = await prisma.complaint.update({
       where: { id: complaintId },
       data: {
         assignedToId: staffId,
         status: 'Assigned'
       },
-      include: { user: true, assignedTo: true }
+      include: { user: true, assignedTo: true, department: true }
     });
 
     // Add history
@@ -228,7 +259,7 @@ const complaintService = {
       emailTemplates.complaintAssigned(complaint.complaintCode, staff.name)
     );
 
-    return complaint;
+    return updated;
   },
 
   async addFeedback(complaintId, userId, rating, comment) {
