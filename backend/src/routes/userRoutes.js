@@ -41,6 +41,42 @@ router.post(
 // Get departments
 router.get('/departments/list', userController.getDepartments);
 
+// Create manager (admin only) - convenience route
+router.post(
+  '/create-manager',
+  rbacMiddleware(['admin']),
+  [
+    body('name').notEmpty().withMessage('Name is required'),
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('phone').optional().isMobilePhone().withMessage('Valid phone is required'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('departmentId').notEmpty().withMessage('Department is required')
+  ],
+  validationMiddleware,
+  async (req, res, next) => {
+    req.body.role = 'department_manager';
+    userController.createUser(req, res, next);
+  }
+);
+
+// Create staff (admin and department_manager) - convenience route
+router.post(
+  '/create-staff',
+  rbacMiddleware(['admin', 'department_manager']),
+  [
+    body('name').notEmpty().withMessage('Name is required'),
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('phone').optional().isMobilePhone().withMessage('Valid phone is required'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('departmentId').notEmpty().withMessage('Department is required')
+  ],
+  validationMiddleware,
+  async (req, res, next) => {
+    req.body.role = 'staff';
+    userController.createUser(req, res, next);
+  }
+);
+
 // Get all users (admin only)
 router.get(
   '/',

@@ -10,6 +10,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 // Pages
 import LoginPage from '@/pages/LoginPage'
+import RegisterPage from '@/pages/RegisterPage'
 import DashboardPage from '@/pages/DashboardPage'
 import ComplaintsPage from '@/pages/ComplaintsPage'
 import ComplaintDetailPage from '@/pages/ComplaintDetailPage'
@@ -19,6 +20,14 @@ import ProfilePage from '@/pages/ProfilePage'
 import AnalyticsPage from '@/pages/AnalyticsPage'
 import StaffDashboard from '@/pages/StaffDashboard'
 import { NotFoundPage, ServerErrorPage, UnauthorizedPage } from '@/pages/ErrorPages'
+
+// Admin Pages
+import DepartmentManagement from '@/pages/admin/DepartmentManagement'
+import ManagerManagement from '@/pages/admin/ManagerManagement'
+import CategoryManagement from '@/pages/admin/CategoryManagement'
+
+// Manager Pages
+import StaffManagement from '@/pages/manager/StaffManagement'
 
 function AppRoutes() {
   const navigate = useNavigate()
@@ -33,6 +42,64 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <DashboardPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Admin Routes */}
+      <Route
+        path="/admin/departments"
+        element={
+          <ProtectedRoute roles={['admin']}>
+            <AppLayout>
+              <DepartmentManagement />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/managers"
+        element={
+          <ProtectedRoute roles={['admin']}>
+            <AppLayout>
+              <ManagerManagement />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/categories"
+        element={
+          <ProtectedRoute roles={['admin', 'department_manager']}>
+            <AppLayout>
+              <CategoryManagement />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Manager Routes */}
+      <Route
+        path="/manager/staff"
+        element={
+          <ProtectedRoute roles={['department_manager']}>
+            <AppLayout>
+              <StaffManagement />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/dashboard"

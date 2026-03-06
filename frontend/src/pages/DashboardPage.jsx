@@ -3,8 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/Badge'
 import { TrendingUp, AlertCircle, CheckCircle, Clock, BarChart3 } from 'lucide-react'
 import { analyticsAPI } from '@/api'
+import { useAuth } from '@/context/AuthContext'
 
 export default function DashboardPage() {
+  const { user } = useAuth()
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -68,7 +70,12 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Welcome! Here's your overview.</p>
+          <p className="text-muted-foreground mt-1">
+            {user?.role === 'admin' && 'System-wide overview of all complaints'}
+            {user?.role === 'department_manager' && 'Your department overview'}
+            {user?.role === 'staff' && 'Your department overview'}
+            {user?.role === 'complainant' && 'Your complaints overview'}
+          </p>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <TrendingUp className="w-4 h-4" />

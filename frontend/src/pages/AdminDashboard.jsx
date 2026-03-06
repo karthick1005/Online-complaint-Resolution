@@ -121,7 +121,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {stats.resolutionRate || ((statusDistribution.closed / complaints.length * 100 || 0).toFixed(0) + '%')}
+                  {stats.resolutionRate }
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">Closed complaints</p>
               </CardContent>

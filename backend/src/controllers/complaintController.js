@@ -486,6 +486,13 @@ const complaintController = {
         return res.status(404).json({ error: 'Complaint not found' });
       }
 
+      // For department managers: verify they can only escalate complaints in their department
+      if (req.user.role === 'department_manager') {
+        if (complaint.departmentId !== req.user.departmentId) {
+          return res.status(403).json({ error: 'You can only escalate complaints from your department' });
+        }
+      }
+
       // Update complaint status to Escalated
       const updatedComplaint = await prisma.complaint.update({
         where: { id: req.params.id },

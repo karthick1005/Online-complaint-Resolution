@@ -30,7 +30,7 @@ export default function ComplaintsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const { user } = useAuth()
-  const { showToast } = useToast()
+  const { addToast } = useToast()
   const navigate = useNavigate()
   const itemsPerPage = 10
 
@@ -79,7 +79,7 @@ export default function ComplaintsPage() {
       setComplaints(response.data.data || [])
     } catch (error) {
       console.error('Failed to fetch complaints:', error)
-      showToast('Failed to load complaints', 'error')
+      addToast('Failed to load complaints', 'error')
     } finally {
       setLoading(false)
     }

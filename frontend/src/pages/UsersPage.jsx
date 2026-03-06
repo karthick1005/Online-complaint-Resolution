@@ -41,7 +41,7 @@ export default function UsersPage() {
     departmentId: ''
   })
   const [formErrors, setFormErrors] = useState({})
-  const { showToast } = useToast()
+  const { addToast } = useToast()
   const { user: currentUser } = useAuth()
   const itemsPerPage = 10
 
@@ -71,7 +71,7 @@ export default function UsersPage() {
       })
       setUsers(response.data.data || [])
     } catch (error) {
-      showToast('Failed to load users', 'error')
+      addToast('Failed to load users', 'error')
       console.error('Failed to load users:', error)
     } finally {
       setLoading(false)
@@ -80,7 +80,7 @@ export default function UsersPage() {
 
   const handleDeleteUser = async (userId) => {
     if (userId === currentUser?.id) {
-      showToast('Cannot delete your own account', 'error')
+      addToast('Cannot delete your own account', 'error')
       return
     }
 
@@ -88,9 +88,9 @@ export default function UsersPage() {
       try {
         await userAPI.deleteUser(userId)
         setUsers((prev) => prev.filter((u) => u.id !== userId))
-        showToast('User deleted successfully', 'success')
+        addToast('User deleted successfully', 'success')
       } catch (error) {
-        showToast('Failed to delete user', 'error')
+        addToast('Failed to delete user', 'error')
       }
     }
   }
@@ -103,9 +103,9 @@ export default function UsersPage() {
           u.id === userId ? { ...u, isActive: response.data.user.isActive } : u
         )
       )
-      showToast(response.data.message, 'success')
+      addToast(response.data.message, 'success')
     } catch (error) {
-      showToast('Failed to update user status', 'error')
+      addToast('Failed to update user status', 'error')
     }
   }
 
@@ -138,7 +138,7 @@ export default function UsersPage() {
       
       const response = await userAPI.createUser(userData)
       setUsers((prev) => [response.data.user, ...prev])
-      showToast('User created successfully', 'success')
+      addToast('User created successfully', 'success')
       
       // Reset form
       setFormData({
@@ -152,7 +152,7 @@ export default function UsersPage() {
       setFormErrors({})
       setShowAddForm(false)
     } catch (error) {
-      showToast(error.response?.data?.error || 'Failed to create user', 'error')
+      addToast(error.response?.data?.error || 'Failed to create user', 'error')
     } finally {
       setFormLoading(false)
     }

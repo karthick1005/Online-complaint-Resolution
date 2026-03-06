@@ -11,8 +11,13 @@ const analyticsController = {
       if (req.user.role === 'complainant') {
         // Complainants can only see their own complaints
         complaintFilter = { userId: req.user.id };
+      } else if (req.user.role === 'department_manager' || req.user.role === 'staff') {
+        // Department managers and staff see only their department's complaints
+        if (req.user.departmentId) {
+          complaintFilter = { departmentId: req.user.departmentId };
+        }
       }
-      // admin, department_manager, and staff see all complaints
+      // admin sees all complaints (no filter)
 
       // Total complaints
       const totalComplaints = await prisma.complaint.count({

@@ -37,7 +37,7 @@ import { InternalNotes } from "@/components/InternalNotes";
 export default function ComplaintDetailPage() {
   const { id } = useParams();
   const { user: currentUser } = useAuth();
-  const { showToast } = useToast();
+  const { addToast } = useToast();
   const [complaint, setComplaint] = useState(null);
   const [loading, setLoading] = useState(true);
   const [staffList, setStaffList] = useState([]);
@@ -1324,7 +1324,7 @@ export default function ComplaintDetailPage() {
           onFilesSelected={(files) => {
             // Handle file selection
             console.log('Files selected:', files);
-            showToast('Files ready to upload', 'success');
+            addToast('Files ready to upload', 'success');
           }}
           maxFiles={5}
           maxSize={10485760}
@@ -1338,7 +1338,7 @@ export default function ComplaintDetailPage() {
           notes={complaint.internalNotes || []}
           onAddNote={(noteData) => {
             console.log('Adding note:', noteData);
-            showToast('Internal note added', 'success');
+            addToast('Internal note added', 'success');
           }}
           loading={false}
           isVisible={true}
@@ -1351,7 +1351,7 @@ export default function ComplaintDetailPage() {
           complaintId={complaint.id}
           onSubmit={(feedbackData) => {
             console.log('Submitting feedback:', feedbackData);
-            showToast('Thank you for your feedback!', 'success');
+            addToast('Thank you for your feedback!', 'success');
           }}
           loading={feedbackLoading}
         />

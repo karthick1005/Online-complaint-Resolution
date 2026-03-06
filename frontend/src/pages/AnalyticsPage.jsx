@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { analyticsAPI } from '@/api'
 import { useToast } from '@/context/ToastContext'
+import { useAuth } from '@/context/AuthContext'
 
 export default function AnalyticsPage() {
+  const { user } = useAuth()
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState('30')
-  const { showToast } = useToast()
+  const { addToast } = useToast()
 
   useEffect(() => {
     fetchAnalytics()
@@ -22,7 +24,7 @@ export default function AnalyticsPage() {
       const response = await analyticsAPI.getDashboardStats()
       setStats(response.data)
     } catch (error) {
-      showToast('Failed to load analytics', 'error')
+      addToast('Failed to load analytics', 'error')
       console.error('Failed to fetch analytics:', error)
     } finally {
       setLoading(false)
@@ -75,7 +77,12 @@ export default function AnalyticsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Analytics & Reports</h1>
-          <p className="text-muted-foreground mt-1">Performance metrics and insights</p>
+          <p className="text-muted-foreground mt-1">
+            {user?.role === 'admin' && 'System-wide performance metrics and insights'}
+            {user?.role === 'department_manager' && 'Your department performance metrics'}
+            {user?.role === 'staff' && 'Your department performance metrics'}
+            {user?.role === 'complainant' && 'Your complaints analytics'}
+          </p>
         </div>
         <div className="flex gap-2">
           <select

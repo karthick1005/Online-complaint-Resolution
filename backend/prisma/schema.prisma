@@ -74,6 +74,7 @@ model Category {
   departmentId    String   @map("department_id")
   department      Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   defaultPriority Priority @default(Medium) @map("default_priority")
+  color           String?
   createdAt       DateTime @default(now()) @map("created_at")
 
   // Relations

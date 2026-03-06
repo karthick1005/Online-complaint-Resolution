@@ -26,7 +26,7 @@ const userService = {
         name,
         email,
         phone,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         role,
         departmentId: departmentId || null,
         isActive: true
@@ -189,7 +189,7 @@ async getAllUsers(query = {}, currentUser) {
     }
 
     // Verify old password
-    const isValidPassword = await bcrypt.compare(oldPassword, user.password);
+    const isValidPassword = await bcrypt.compare(oldPassword, user.passwordHash);
     if (!isValidPassword) {
       throw new Error('Invalid old password');
     }
@@ -199,7 +199,7 @@ async getAllUsers(query = {}, currentUser) {
 
     await prisma.user.update({
       where: { id },
-      data: { password: hashedPassword }
+      data: { passwordHash: hashedPassword }
     });
   },
 

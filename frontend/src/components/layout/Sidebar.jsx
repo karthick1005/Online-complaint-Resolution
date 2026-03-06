@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Home, FileText, BarChart3, Settings, Users, X } from 'lucide-react'
+import { Home, FileText, BarChart3, Settings, Users, X, Building2, UserCog, Layers, Shield, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
 
@@ -8,23 +8,30 @@ const menuItems = {
   admin: [
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
     { icon: FileText, label: 'All Complaints', path: '/complaints' },
-    { icon: Users, label: 'Users', path: '/users' },
+    { icon: Building2, label: 'Departments', path: '/admin/departments' },
+    { icon: UserCog, label: 'Managers', path: '/admin/managers' },
+    { icon: Layers, label: 'Categories', path: '/admin/categories' },
+    { icon: Users, label: 'All Users', path: '/users' },
     { icon: BarChart3, label: 'Analytics', path: '/analytics' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ],
   department_manager: [
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
     { icon: FileText, label: 'Department Complaints', path: '/complaints' },
-    { icon: Users, label: 'Staff', path: '/staff' },
+    { icon: UserPlus, label: 'Manage Staff', path: '/manager/staff' },
+    { icon: Layers, label: 'Categories', path: '/admin/categories' },
     { icon: BarChart3, label: 'Reports', path: '/analytics' },
+    { icon: Settings, label: 'Settings', path: '/settings' },
   ],
   staff: [
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
     { icon: FileText, label: 'Assigned Complaints', path: '/complaints' },
+    { icon: Settings, label: 'Profile', path: '/profile' },
   ],
   complainant: [
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
     { icon: FileText, label: 'My Complaints', path: '/complaints' },
+    { icon: Settings, label: 'Profile', path: '/profile' },
   ],
 }
 

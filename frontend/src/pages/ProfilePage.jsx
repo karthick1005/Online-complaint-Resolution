@@ -10,7 +10,7 @@ import { userAPI } from '@/api'
 
 export default function ProfilePage() {
   const { user } = useAuth()
-  const { showToast } = useToast()
+  const { addToast } = useToast()
   const { isDark, toggleTheme } = useTheme()
 
   const [profileData, setProfileData] = useState({
@@ -40,7 +40,7 @@ export default function ProfilePage() {
   const handleUpdateProfile = async (e) => {
     e.preventDefault()
     if (!profileData.name || !profileData.email) {
-      showToast('Name and email are required', 'error')
+      addToast('Name and email are required', 'error')
       return
     }
 
@@ -50,9 +50,9 @@ export default function ProfilePage() {
         name: profileData.name,
         phone: profileData.phone,
       })
-      showToast('Profile updated successfully', 'success')
+      addToast('Profile updated successfully', 'success')
     } catch (error) {
-      showToast(error.response?.data?.error || 'Failed to update profile', 'error')
+      addToast(error.response?.data?.error || 'Failed to update profile', 'error')
     } finally {
       setLoading(false)
     }
@@ -62,17 +62,17 @@ export default function ProfilePage() {
     e.preventDefault()
 
     if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-      showToast('All password fields are required', 'error')
+      addToast('All password fields are required', 'error')
       return
     }
 
     if (passwordData.newPassword.length < 8) {
-      showToast('New password must be at least 8 characters', 'error')
+      addToast('New password must be at least 8 characters', 'error')
       return
     }
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      showToast('Passwords do not match', 'error')
+      addToast('Passwords do not match', 'error')
       return
     }
 
@@ -88,9 +88,9 @@ export default function ProfilePage() {
         newPassword: '',
         confirmPassword: '',
       })
-      showToast('Password changed successfully', 'success')
+      addToast('Password changed successfully', 'success')
     } catch (error) {
-      showToast(error.response?.data?.error || 'Failed to change password', 'error')
+      addToast(error.response?.data?.error || 'Failed to change password', 'error')
     } finally {
       setLoading(false)
     }

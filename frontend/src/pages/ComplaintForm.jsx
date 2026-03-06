@@ -59,8 +59,8 @@ const ComplaintForm = () => {
       // Try to fetch categories from API
       const result = await categoryAPI.getCategoriesByDepartment(deptId).catch(() => null);
       
-      if (result?.data) {
-        setCategories(result.data);
+      if (result?.data?.data) {
+        setCategories(result.data.data);
       } else {
         // Fallback to local categories data
         const localCategories = getCategories(dept.name);
