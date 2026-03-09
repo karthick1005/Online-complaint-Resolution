@@ -134,45 +134,45 @@ export default function StaffDashboard() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
+                    <TableHead className="hidden sm:table-cell">Email</TableHead>
+                    <TableHead className="hidden md:table-cell">Phone</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Department</TableHead>
+                    <TableHead className="hidden lg:table-cell">Department</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Joined</TableHead>
+                    <TableHead className="hidden lg:table-cell">Joined</TableHead>
                   </TableRow>
                 </TableHeader>
 
                 <TableBody>
                   {filteredStaffs.map((staff) => (
                     <TableRow key={staff.id}>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium text-sm">
                         {staff.name}
                       </TableCell>
 
-                      <TableCell>{staff.email}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-sm">{staff.email}</TableCell>
 
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell text-sm">
                         {staff.phone || "—"}
                       </TableCell>
 
                       <TableCell>
-                        <Badge variant={getRoleColor(staff.role)}>
+                        <Badge variant={getRoleColor(staff.role)} className="text-xs">
                           {staff.role.replace("_", " ")}
                         </Badge>
                       </TableCell>
 
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm">
                         {staff.department?.name || "—"}
                       </TableCell>
 
                       <TableCell>
-                        <Badge variant={staff.isActive ? "resolved" : "closed"}>
+                        <Badge variant={staff.isActive ? "resolved" : "closed"} className="text-xs">
                           {staff.isActive ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
 
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-xs text-muted-foreground hidden lg:table-cell">
                         {formatDate(staff.createdAt)}
                       </TableCell>
                     </TableRow>

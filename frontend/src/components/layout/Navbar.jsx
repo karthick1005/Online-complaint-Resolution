@@ -1,4 +1,4 @@
-import { LogOut, Menu, Bell, Settings, Moon, Sun, User } from 'lucide-react'
+import { LogOut, Menu, Bell, Moon, Sun, User } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/Avatar'
 import {
@@ -101,7 +101,7 @@ export function Navbar({ onMenuClick }) {
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56 bg-background">
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col gap-1">
                       <p className="font-semibold text-sm">{user.name}</p>
@@ -114,11 +114,7 @@ export function Navbar({ onMenuClick }) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer gap-2">
                     <User className="w-4 h-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer gap-2">
-                    <Settings className="w-4 h-4" />
-                    <span>Settings</span>
+                    <span>Profile & Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem

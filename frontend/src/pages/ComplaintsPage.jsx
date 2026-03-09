@@ -139,21 +139,21 @@ export default function ComplaintsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold">📋 Complaints</h1>
-          <p className="text-muted-foreground mt-1">Manage and track all complaints across departments</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold">📋 Complaints</h1>
+          <p className="text-muted-foreground mt-1 text-xs sm:text-sm">Manage and track all complaints across departments</p>
         </div>
 
         {user?.role === 'complainant' && (
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
+              <Button className="gap-2 w-full sm:w-auto">
                 <Plus className="w-4 h-4" />
                 File Complaint
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create New Complaint</DialogTitle>
                 <DialogDescription>File a new complaint to get it resolved</DialogDescription>
@@ -195,13 +195,13 @@ export default function ComplaintsPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Department</label>
               <select
                 value={filterDepartment}
                 onChange={(e) => setFilterDepartment(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg bg-background text-sm"
+                className="w-full px-3 py-2 border rounded-lg bg-background text-xs sm:text-sm"
               >
                 <option value="all">All Departments</option>
                 {departments.map((dept) => (
@@ -217,7 +217,7 @@ export default function ComplaintsPage() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg bg-background text-sm"
+                className="w-full px-3 py-2 border rounded-lg bg-background text-xs sm:text-sm"
               >
                 <option value="all">All Statuses</option>
                 <option value="Registered">Registered</option>
@@ -234,7 +234,7 @@ export default function ComplaintsPage() {
               <select
                 value={filterPriority}
                 onChange={(e) => setFilterPriority(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg bg-background text-sm"
+                className="w-full px-3 py-2 border rounded-lg bg-background text-xs sm:text-sm"
               >
                 <option value="all">All Priorities</option>
                 <option value="Critical">Critical</option>
@@ -266,38 +266,39 @@ export default function ComplaintsPage() {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
+              {/* Desktop Table */}
+              <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Code</TableHead>
                       <TableHead>Title</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead>Priority</TableHead>
+                      <TableHead className="hidden sm:table-cell">Department</TableHead>
+                      <TableHead className="hidden md:table-cell">Priority</TableHead>
+                      <TableHead className="hidden lg:table-cell">Date</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Date</TableHead>
                       <TableHead className="w-10"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedComplaints.map((complaint) => (
                       <TableRow key={complaint.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/complaints/${complaint.id}`)}>
-                        <TableCell className="font-mono text-sm font-semibold">{complaint.complaintCode}</TableCell>
-                        <TableCell className="font-medium">{complaint.title}</TableCell>
-                        <TableCell>
-                          <span className="text-sm">{complaint.department?.name || 'N/A'}</span>
+                        <TableCell className="font-mono text-xs sm:text-sm font-semibold">{complaint.complaintCode}</TableCell>
+                        <TableCell className="font-medium text-sm">{complaint.title}</TableCell>
+                        <TableCell className="hidden sm:table-cell text-sm">
+                          <span className="text-xs">{complaint.department?.name || 'N/A'}</span>
                         </TableCell>
-                        <TableCell>
-                          <Badge variant={getPriorityVariant(complaint.priority)}>{complaint.priority}</Badge>
+                        <TableCell className="hidden md:table-cell">
+                          <Badge variant={getPriorityVariant(complaint.priority)} className="text-xs">{complaint.priority}</Badge>
                         </TableCell>
+                        <TableCell className="hidden lg:table-cell text-muted-foreground text-xs">{formatDate(complaint.createdAt)}</TableCell>
                         <TableCell>
-                          <Badge variant={getStatusVariant(complaint.status)}>{complaint.status}</Badge>
+                          <Badge variant={getStatusVariant(complaint.status)} className="text-xs">{complaint.status}</Badge>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">{formatDate(complaint.createdAt)}</TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
                                 <MoreHorizontal className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -313,6 +314,61 @@ export default function ComplaintsPage() {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                {paginatedComplaints.map((complaint) => (
+                  <div 
+                    key={complaint.id} 
+                    onClick={() => navigate(`/complaints/${complaint.id}`)}
+                    className="border border-border rounded-lg p-4 space-y-2 cursor-pointer hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-mono text-xs font-semibold text-muted-foreground">{complaint.complaintCode}</p>
+                        <h4 className="font-semibold text-sm text-foreground line-clamp-2">{complaint.title}</h4>
+                      </div>
+                      <Badge variant={getStatusVariant(complaint.status)} className="text-xs flex-shrink-0">
+                        {complaint.status}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <Badge variant={getPriorityVariant(complaint.priority)} className="text-xs">
+                        {complaint.priority}
+                      </Badge>
+                      {complaint.department && (
+                        <span className="text-muted-foreground">{complaint.department.name}</span>
+                      )}
+                      <span className="text-muted-foreground">{formatDate(complaint.createdAt)}</span>
+                    </div>
+
+                    <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => navigate(`/complaints/${complaint.id}`)}
+                        className="flex-1 text-xs h-8"
+                      >
+                        View Details
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => navigate(`/complaints/${complaint.id}`)}>
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>Add Comment</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {totalPages > 1 && (

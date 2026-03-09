@@ -89,29 +89,31 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               title="Total Complaints"
-              value={stats.totalComplaints}
+              value={stats.totalComplaints || 0}
               icon={BarChart3}
               variant="default"
             />
             <StatCard
               title="Avg Rating"
-              value={stats.averageRating?.toFixed(1)}
+              value={stats.averageRating ? stats.averageRating.toFixed(1) : '0.0'}
               description="Customer satisfaction"
               variant="success"
             />
             <StatCard
               title="Resolution Rate"
-              value={`${stats.resolutionRate}%`}
+              value={stats.resolutionRate || '0%'}
               icon={CheckCircle}
               description="Closed complaints"
               variant="success"
             />
-            <StatCard
-              title="SLA Breaches"
-              value={stats.slaBreaches}
-              icon={AlertCircle}
-              variant="danger"
-            />
+            {stats.slaBreaches !== undefined && (
+              <StatCard
+                title="SLA Breaches"
+                value={stats.slaBreaches || 0}
+                icon={AlertCircle}
+                variant="danger"
+              />
+            )}
           </div>
 
           {/* Details Grid */}

@@ -1346,7 +1346,7 @@ export default function ComplaintDetailPage() {
       )} */}
 
       {/* Feedback Section */}
-      {complaint.status === 'Resolved' || complaint.status === 'Closed' && currentUser?.role === 'complainant' ? (
+      {/* {complaint.status === 'Resolved' || complaint.status === 'Closed' && currentUser?.role === 'complainant' ? (
         <FeedbackForm
           complaintId={complaint.id}
           onSubmit={(feedbackData) => {
@@ -1355,7 +1355,7 @@ export default function ComplaintDetailPage() {
           }}
           loading={feedbackLoading}
         />
-      ) : null}
+      ) : null} */}
 
       {/* Image Modal */}
       {selectedImage && (

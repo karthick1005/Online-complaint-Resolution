@@ -94,68 +94,68 @@ export default function ManagerManagement() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 animate-fadeIn">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-6 lg:py-8 animate-fadeIn">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl shadow-lg">
-              <UserCog className="w-8 h-8 text-white" />
+        <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="p-2 sm:p-3 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg sm:rounded-xl shadow-lg w-fit flex-shrink-0">
+              <UserCog className="w-5 sm:w-6 lg:w-8 h-5 sm:h-6 lg:h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
                 Manager Management
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Manage department managers and their assignments
+              <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 mt-1">
+                Manage department managers
               </p>
             </div>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="stats-card bg-gradient-to-br from-cyan-500 to-blue-600 text-white">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 md:gap-6">
+          <div className="stats-card bg-gradient-to-br from-cyan-500 to-blue-600 text-white p-3 sm:p-4 rounded-lg overflow-hidden">
             <div className="relative z-10">
-              <p className="text-cyan-100 text-sm font-medium mb-1">Total Managers</p>
-              <p className="text-3xl font-bold">{managers.length}</p>
+              <p className="text-cyan-100 text-xs font-medium mb-1">Total Managers</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{managers.length}</p>
             </div>
-            <Shield className="absolute bottom-4 right-4 w-16 h-16 opacity-20" />
+            <Shield className="absolute -bottom-1 -right-1 sm:bottom-1 sm:right-1 w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 opacity-20" />
           </div>
-          <div className="stats-card bg-gradient-to-br from-purple-500 to-pink-600 text-white">
+          <div className="stats-card bg-gradient-to-br from-purple-500 to-pink-600 text-white p-3 sm:p-4 rounded-lg overflow-hidden">
             <div className="relative z-10">
-              <p className="text-purple-100 text-sm font-medium mb-1">Total Departments</p>
-              <p className="text-3xl font-bold">{departments.length}</p>
+              <p className="text-purple-100 text-xs font-medium mb-1">Departments</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{departments.length}</p>
             </div>
-            <Building2 className="absolute bottom-4 right-4 w-16 h-16 opacity-20" />
+            <Building2 className="absolute -bottom-1 -right-1 sm:bottom-1 sm:right-1 w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 opacity-20" />
           </div>
-          <div className="stats-card bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+          <div className="stats-card bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-3 sm:p-4 rounded-lg overflow-hidden col-span-2 md:col-span-1">
             <div className="relative z-10">
-              <p className="text-emerald-100 text-sm font-medium mb-1">Active Managers</p>
-              <p className="text-3xl font-bold">{managers.filter(m => m.isActive).length}</p>
+              <p className="text-emerald-100 text-xs font-medium mb-1">Active</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{managers.filter(m => m.isActive).length}</p>
             </div>
-            <UserCog className="absolute bottom-4 right-4 w-16 h-16 opacity-20" />
+            <UserCog className="absolute -bottom-1 -right-1 sm:bottom-1 sm:right-1 w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 opacity-20" />
           </div>
         </div>
 
         {/* Action Bar */}
-        <div className="modern-card p-6 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <div className="modern-card p-3 sm:p-4 md:p-6 overflow-hidden">
+          <div className="flex flex-col gap-2 sm:gap-3 md:gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search managers..."
+                placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="modern-input pl-10"
+                className="modern-input pl-10 text-xs sm:text-sm w-full h-9 sm:h-10"
               />
             </div>
             <button
               onClick={() => setShowModal(true)}
-              className="btn btn-primary hover-lift"
+              className="btn btn-primary hover-lift w-full"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4" />
               Add Manager
             </button>
           </div>
@@ -164,19 +164,19 @@ export default function ManagerManagement() {
         {/* Managers Table */}
         {loading ? (
           <div className="modern-card overflow-hidden">
-            <div className="p-6 space-y-4 animate-pulse">
+            <div className="p-4 sm:p-6 space-y-4 animate-pulse">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
               ))}
             </div>
           </div>
         ) : filteredManagers.length === 0 ? (
-          <div className="modern-card p-12 text-center">
-            <UserCog className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="modern-card p-8 sm:p-12 text-center">
+            <UserCog className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">
               No managers found
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6">
               {searchTerm ? 'Try adjusting your search' : 'Get started by creating your first manager'}
             </p>
             {!searchTerm && (
@@ -188,99 +188,158 @@ export default function ManagerManagement() {
           </div>
         ) : (
           <div className="modern-card overflow-hidden">
-            <table className="modern-table">
-              <thead>
-                <tr>
-                  <th>Manager</th>
-                  <th>Contact</th>
-                  <th>Department</th>
-                  <th>Status</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredManagers.map((manager, index) => (
-                  <tr key={manager.id} className="animate-slideIn" style={{ animationDelay: `${index * 50}ms` }}>
-                    <td>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-semibold">
-                          {manager.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-900 dark:text-white">
-                            {manager.name}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            ID: {manager.id}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                          <Mail className="w-4 h-4" />
-                          {manager.email}
-                        </div>
-                        {manager.phone && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <Phone className="w-4 h-4" />
-                            {manager.phone}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      {manager.department ? (
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {manager.department.name}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-500 dark:text-gray-400">Not assigned</span>
-                      )}
-                    </td>
-                    <td>
-                      <span className={`status-badge ${manager.isActive ? 'status-resolved' : 'status-rejected'}`}>
-                        {manager.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="flex gap-2 justify-end">
-                        <button
-                          onClick={() => handleEdit(manager)}
-                          className="btn-icon text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(manager.id)}
-                          className="btn-icon text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="modern-table w-full">
+                <thead>
+                  <tr>
+                    <th>Manager</th>
+                    <th>Contact</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                    <th className="text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredManagers.map((manager, index) => (
+                    <tr key={manager.id} className="animate-slideIn" style={{ animationDelay: `${index * 50}ms` }}>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                            {manager.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900 dark:text-white text-sm">
+                              {manager.name}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              ID: {manager.id}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <Mail className="w-4 h-4 flex-shrink-0" />
+                            <span className="truncate">{manager.email}</span>
+                          </div>
+                          {manager.phone && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                              <Phone className="w-4 h-4 flex-shrink-0" />
+                              <span className="truncate">{manager.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        {manager.department ? (
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {manager.department.name}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-500 dark:text-gray-400">Not assigned</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className={`status-badge text-xs ${manager.isActive ? 'status-resolved' : 'status-rejected'}`}>
+                          {manager.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="flex gap-2 justify-end">
+                          <button
+                            onClick={() => handleEdit(manager)}
+                            className="btn-icon text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-2"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(manager.id)}
+                            className="btn-icon text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 p-2"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-2 sm:space-y-3 p-3 sm:p-4">
+              {filteredManagers.map((manager) => (
+                <div key={manager.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3 overflow-hidden">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
+                        {manager.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 dark:text-white text-xs sm:text-sm truncate">
+                          {manager.name}
+                        </p>
+                        <span className={`inline-block text-xs mt-1 px-2 py-0.5 rounded ${manager.isActive ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+                          {manager.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => handleEdit(manager)}
+                        className="p-1.5 sm:p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(manager.id)}
+                        className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1.5 text-xs sm:text-sm">
+                    <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 overflow-hidden">
+                      <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+                      <span className="truncate">{manager.email}</span>
+                    </div>
+                    {manager.phone && (
+                      <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 overflow-hidden">
+                        <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{manager.phone}</span>
+                      </div>
+                    )}
+                    {manager.department && (
+                      <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 overflow-hidden">
+                        <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{manager.department.name}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="modern-card max-w-md w-full p-6 animate-scaleIn">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 animate-fadeIn">
+          <div className="modern-card w-full sm:max-w-md p-4 sm:p-6 rounded-t-2xl sm:rounded-2xl animate-scaleIn">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
               {editingManager ? 'Edit Manager' : 'Create Manager'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Full Name *
                 </label>
                 <input
@@ -288,13 +347,13 @@ export default function ManagerManagement() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="modern-input"
+                  className="modern-input text-sm"
                   placeholder="John Doe"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Email *
                 </label>
                 <input
@@ -302,33 +361,33 @@ export default function ManagerManagement() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="modern-input"
+                  className="modern-input text-sm"
                   placeholder="john@company.com"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Phone
                 </label>
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="modern-input"
+                  className="modern-input text-sm"
                   placeholder="+1 (555) 000-0000"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Department *
                 </label>
                 <select
                   required
                   value={formData.departmentId}
                   onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
-                  className="modern-select"
+                  className="modern-select text-sm"
                 >
                   <option value="">Select Department</option>
                   {departments.map(dept => (
@@ -338,7 +397,7 @@ export default function ManagerManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Password {editingManager && '(Leave blank to keep current)'}
                 </label>
                 <input
@@ -346,23 +405,23 @@ export default function ManagerManagement() {
                   required={!editingManager}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="modern-input"
+                  className="modern-input text-sm"
                   placeholder="••••••••"
                   minLength={6}
                 />
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="btn btn-secondary flex-1"
+                  className="btn btn-secondary w-full sm:flex-1"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary flex-1"
+                  className="btn btn-primary w-full sm:flex-1"
                 >
                   {editingManager ? 'Update' : 'Create'}
                 </button>

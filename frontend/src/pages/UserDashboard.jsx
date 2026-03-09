@@ -78,14 +78,14 @@ export default function UserDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold">My Complaints</h1>
-          <p className="text-muted-foreground mt-1">Track and manage your filed complaints</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold">My Complaints</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Track and manage your filed complaints</p>
         </div>
         <Button
           onClick={() => navigate('/complaints/new')}
-          className="gap-2"
+          className="gap-2 w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" />
           File New Complaint
@@ -93,43 +93,43 @@ export default function UserDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 md:grid-cols-3 gap-3 sm:gap-4">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-              <span>Total Complaints</span>
-              <TrendingUp className="w-4 h-4 text-muted-foreground" />
+          <CardHeader className="pb-2 sm:pb-3">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center justify-between">
+              <span>Total</span>
+              <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground mt-2">All time</p>
+            <div className="text-xl sm:text-2xl font-bold">{stats.total}</div>
+            <p className="text-xs text-muted-foreground mt-1">All time</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+          <CardHeader className="pb-2 sm:pb-3">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center justify-between">
               <span>Pending</span>
-              <Clock className="w-4 h-4 text-orange-600" />
+              <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-orange-600" />
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground mt-2">Being processed</p>
+            <div className="text-xl sm:text-2xl font-bold text-orange-600">{stats.pending}</div>
+            <p className="text-xs text-muted-foreground mt-1">Processing</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+          <CardHeader className="pb-2 sm:pb-3">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center justify-between">
               <span>Resolved</span>
-              <CheckCircle className="w-4 h-4 text-green-600" />
+              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.resolved}</div>
-            <p className="text-xs text-muted-foreground mt-2">Completed</p>
+            <div className="text-xl sm:text-2xl font-bold text-green-600">{stats.resolved}</div>
+            <p className="text-xs text-muted-foreground mt-1">Done</p>
           </CardContent>
         </Card>
       </div>
@@ -141,7 +141,7 @@ export default function UserDashboard() {
           <CardDescription>View and manage all your filed complaints</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-3">
             <Input
               placeholder="Search by code or title..."
               value={searchTerm}
@@ -151,7 +151,7 @@ export default function UserDashboard() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border rounded-lg bg-background"
+              className="px-3 py-2 border rounded-lg bg-background text-sm"
             >
               <option value="all">All Statuses</option>
               <option value="Registered">Registered</option>
@@ -171,38 +171,38 @@ export default function UserDashboard() {
                   <TableRow>
                     <TableHead>Code</TableHead>
                     <TableHead>Title</TableHead>
-                    <TableHead>Priority</TableHead>
+                    <TableHead className="hidden sm:table-cell">Priority</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Assigned To</TableHead>
-                    <TableHead>Created</TableHead>
+                    <TableHead className="hidden md:table-cell">Assigned To</TableHead>
+                    <TableHead className="hidden lg:table-cell">Created</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredComplaints.map((complaint) => (
                     <TableRow key={complaint.id}>
-                      <TableCell className="font-medium">{complaint.complaintCode}</TableCell>
-                      <TableCell className="max-w-xs truncate">{complaint.title}</TableCell>
-                      <TableCell>
-                        <Badge variant={getPriorityColor(complaint.priority)}>
+                      <TableCell className="font-medium text-sm">{complaint.complaintCode}</TableCell>
+                      <TableCell className="max-w-xs truncate text-sm">{complaint.title}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <Badge variant={getPriorityColor(complaint.priority)} className="text-xs">
                           {complaint.priority}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getStatusColor(complaint.status)}>
+                        <Badge variant={getStatusColor(complaint.status)} className="text-xs">
                           {complaint.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         {complaint.assignedTo ? (
-                          <div className="text-sm">
+                          <div className="text-xs">
                             <p className="font-medium">{complaint.assignedTo.name}</p>
                           </div>
                         ) : (
-                          <span className="text-sm text-muted-foreground">Pending</span>
+                          <span className="text-xs text-muted-foreground">Pending</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-xs text-muted-foreground hidden lg:table-cell">
                         {formatDate(complaint.createdAt)}
                       </TableCell>
                       <TableCell className="text-right">
@@ -210,6 +210,7 @@ export default function UserDashboard() {
                           size="sm"
                           variant="outline"
                           onClick={() => navigate(`/complaints/${complaint.id}`)}
+                          className="text-xs h-8"
                         >
                           View
                         </Button>

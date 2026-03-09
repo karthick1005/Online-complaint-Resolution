@@ -47,7 +47,9 @@ const authService = {
     if (!isValid) {
       throw new Error('Invalid credentials');
     }
-
+    if(!user.isActive){
+      throw new Error('Account is deactivated. Please contact support.');
+    }
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role,departmentId:user.departmentId },
       process.env.JWT_SECRET,

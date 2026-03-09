@@ -106,7 +106,9 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatBox label="Total Complaints" value={stats.totalComplaints || 0} subtext="All time" trend={5.2} />
         <StatBox label="Resolution Rate" value={stats.resolutionRate || '0%'} subtext="Closed complaints" trend={3.1} />
-        <StatBox label="SLA Breaches" value={stats.slaBreaches || 0} subtext="Overdue complaints" trend={-2.5} />
+        {stats.slaBreaches !== undefined && (
+          <StatBox label="SLA Breaches" value={stats.slaBreaches || 0} subtext="Overdue complaints" trend={-2.5} />
+        )}
         <StatBox label="Average Rating" value={stats.averageRating ? stats.averageRating.toFixed(1) : 0} subtext="Out of 5 stars" />
         <StatBox label="Total Users" value="—" subtext="Pending integration" />
         <StatBox label="Avg Response Time" value="—" subtext="Under development" trend={1.8} />
@@ -219,9 +221,11 @@ export default function AnalyticsPage() {
             <p>
               <span className="font-medium">Resolution Rate:</span> {stats.resolutionRate}
             </p>
-            <p>
-              <span className="font-medium">SLA Breaches:</span> {stats.slaBreaches}
-            </p>
+            {stats.slaBreaches !== undefined && (
+              <p>
+                <span className="font-medium">SLA Breaches:</span> {stats.slaBreaches}
+              </p>
+            )}
             {stats.averageRating > 0 && (
               <p>
                 <span className="font-medium">Average Rating:</span> {stats.averageRating.toFixed(1)}/5 ✨

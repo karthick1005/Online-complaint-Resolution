@@ -263,14 +263,33 @@ const complaintService = {
   },
 
   async addFeedback(complaintId, userId, rating, comment) {
-    const feedback = await prisma.feedback.create({
-      data: {
-        complaintId,
-        userId,
-        rating,
-        comment
-      }
+    // Check if feedback already exists for this complaint
+    const existingFeedback = await prisma.feedback.findUnique({
+      where: { complaintId }
     });
+
+    let feedback;
+    if (existingFeedback) {
+      // Update existing feedback
+      feedback = await prisma.feedback.update({
+        where: { complaintId },
+        data: {
+          user: { connect: { id: userId } },
+          rating,
+          comment
+        }
+      });
+    } else {
+      // Create new feedback
+      feedback = await prisma.feedback.create({
+        data: {
+          complaintId,
+          user: { connect: { id: userId } },
+          rating,
+          comment
+        }
+      });
+    }
 
     // Update complaint status to Closed if feedback added
     await prisma.complaint.update({

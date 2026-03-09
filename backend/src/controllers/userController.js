@@ -52,9 +52,12 @@ const userController = {
   async getUserById(req, res) {
     try {
       const { id } = req.params;
-      const user = await userService.getUserById(id);
+      const user = await userService.getUserById(id, req.user);
       res.json(user);
     } catch (error) {
+      if (error.message.includes('Unauthorized')) {
+        return res.status(403).json({ error: error.message });
+      }
       res.status(404).json({ error: error.message });
     }
   },
@@ -66,7 +69,7 @@ const userController = {
       const { name, phone, role, departmentId, isActive } = req.body;
 
       // Non-admin users can only update themselves
-      if (req.user.role !== 'admin' && req.user.id !== id) {
+      if (req.user.role !== 'admin' && req.user.id !== id && req.user.role !== 'department_manager') {
         return res.status(403).json({ error: 'Unauthorized' });
       }
 

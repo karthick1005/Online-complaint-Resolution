@@ -31,7 +31,7 @@ const analyticsController = {
           byPriority: {},
           averageRating: 0,
           byDepartment: [],
-          slaBreaches: 0,
+          ...(req.user.role !== 'complainant' && { slaBreaches: 0 }),
           resolutionRate: '0%',
           userRole: req.user.role
         });
@@ -51,13 +51,17 @@ const analyticsController = {
         _count: true
       });
 
-      // Average rating (for user's complaints)
-      const avgRating = await prisma.feedback.aggregate({
+      // Average rating - get from complaints matching the filter
+      const feedbacks = await prisma.feedback.findMany({
         where: {
           complaint: complaintFilter
         },
-        _avg: { rating: true }
+        select: { rating: true }
       });
+      
+      const avgRating = feedbacks.length > 0
+        ? { _avg: { rating: feedbacks.reduce((sum, f) => sum + f.rating, 0) / feedbacks.length } }
+        : { _avg: { rating: null } };
 
       // Complaints by department
       const byDepartment = await prisma.complaint.groupBy({
@@ -96,7 +100,8 @@ const analyticsController = {
           department: deptMap[d.departmentId],
           count: d._count
         })),
-        slaBreaches,
+        // Only show SLA breaches to staff, managers, and admins
+        ...(req.user.role !== 'complainant' && { slaBreaches }),
         resolutionRate: ((closedCount / totalComplaints) * 100).toFixed(2) + '%',
         userRole: req.user.role
       });

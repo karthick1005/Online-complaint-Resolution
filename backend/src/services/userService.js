@@ -106,7 +106,7 @@ async getAllUsers(query = {}, currentUser) {
 },
 
   // Get single user by ID
-  async getUserById(id) {
+  async getUserById(id, currentUser) {
     const user = await prisma.user.findUnique({
       where: { id },
       select: {
@@ -117,6 +117,7 @@ async getAllUsers(query = {}, currentUser) {
         role: true,
         isActive: true,
         createdAt: true,
+        departmentId: true,
         department: {
           select: { name: true }
         }
@@ -126,6 +127,16 @@ async getAllUsers(query = {}, currentUser) {
     if (!user) {
       throw new Error('User not found');
     }
+
+    // Authorization check: Non-admin users can only view users from their department or themselves
+    if (currentUser.role !== 'admin') {
+      if (currentUser.id !== id && user.departmentId !== currentUser.departmentId) {
+        throw new Error('Unauthorized');
+      }
+    }
+
+    // Remove departmentId from response (keep it hidden, only show department name)
+    delete user.departmentId;
 
     return user;
   },
