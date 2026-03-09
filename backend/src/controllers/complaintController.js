@@ -258,6 +258,10 @@ const complaintController = {
       if (req.user.role === 'department_manager') {
         where.departmentId = req.user.departmentId;
       }
+      if(req.user.role==="admin")
+      {
+        where.departmentId=req.query.departmentId || undefined; // Admin can filter by department or see all if not specified
+      }
 
       const staff = await prisma.user.findMany({
         where,

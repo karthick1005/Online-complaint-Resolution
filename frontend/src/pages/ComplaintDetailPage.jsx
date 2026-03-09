@@ -91,9 +91,7 @@ export default function ComplaintDetailPage() {
   const [reopenSuccess, setReopenSuccess] = useState(false);
   const [reopenReason, setReopenReason] = useState("");
   const [showReopenDialog, setShowReopenDialog] = useState(false);
-
-  useEffect(() => {
-    const fetchComplaint = async () => {
+ const fetchComplaint = async () => {
       try {
         setLoading(true);
         const response = await complaintAPI.getComplaintById(id);
@@ -104,6 +102,8 @@ export default function ComplaintDetailPage() {
         setLoading(false);
       }
     };
+  useEffect(() => {
+   
     fetchComplaint();
   }, [id]);
 
@@ -156,7 +156,8 @@ export default function ComplaintDetailPage() {
     const fetchStaff = async () => {
       try {
         setStaffLoading(true);
-        const response = await complaintAPI.getStaff();
+        console.log("Fetching staff for department:", complaint.departmentId);
+        const response = await complaintAPI.getStaff({ departmentId: complaint?.departmentId || "" });
         setStaffList(response.data?.data || []);
       } catch (error) {
         console.error("Failed to fetch staff:", error);
@@ -165,7 +166,7 @@ export default function ComplaintDetailPage() {
       }
     };
     fetchStaff();
-  }, []);
+  }, [complaint]);
 
   // Fetch attachments
   useEffect(() => {
@@ -327,6 +328,7 @@ export default function ComplaintDetailPage() {
       setFeedbackLoading(true);
       setFeedbackError("");
       await complaintAPI.addFeedback(id, rating, feedbackComment);
+      fetchComplaint(); // Refresh complaint to show feedback
       setFeedbackSuccess(true);
       setRating(0);
       setFeedbackComment("");
@@ -676,7 +678,7 @@ export default function ComplaintDetailPage() {
               {(currentUser?.role === "department_manager" ||
                 currentUser?.role === "admin") &&
                 (complaint.status === "Registered" ||
-                  complaint.status === "Assigned") && (
+                  complaint.status === "Assigned") && !complaint.assignedTo && (
                   <div className="pt-4 border-t">
                     <form
                       onSubmit={handleAssignComplaint}
@@ -749,7 +751,7 @@ export default function ComplaintDetailPage() {
               {(currentUser?.role === "staff" ||
                 currentUser?.role === "department_manager" ||
                 currentUser?.role === "admin") &&
-                getValidStatusTransitions().length > 0 &&
+                getValidStatusTransitions().length > 0 && complaint.assignedTo &&
                 complaint.status !== "Resolved" && (
                   <div className="pt-4 border-t">
                     <form onSubmit={handleStatusUpdate} className="space-y-3">

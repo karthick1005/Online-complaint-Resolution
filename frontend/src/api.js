@@ -79,7 +79,7 @@ export const complaintAPI = {
     api.post(`/complaints/${id}/assign`, { staffId }),
   addFeedback: (id, rating, comment) =>
     api.post(`/complaints/${id}/feedback`, { rating, comment }),
-  getStaff: () => api.get('/complaints/meta/staff'),
+  getStaff: (filters = {}) => api.get('/complaints/meta/staff', { params: filters }),
   
   // Attachment APIs
   getAttachments: (id) => api.get(`/complaints/${id}/attachments`),

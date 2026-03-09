@@ -146,25 +146,10 @@ export default function ComplaintsPage() {
         </div>
 
         {user?.role === 'complainant' && (
-          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 w-full sm:w-auto">
+              <Button className="gap-2 w-full sm:w-auto" onClick={() => navigate('/complaints/new')}>
                 <Plus className="w-4 h-4" />
                 File Complaint
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Create New Complaint</DialogTitle>
-                <DialogDescription>File a new complaint to get it resolved</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Button onClick={() => navigate('/complaints/new')} className="w-full">
-                  Create Complaint
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         )}
       </div>
 
@@ -296,13 +281,13 @@ export default function ComplaintsPage() {
                           <Badge variant={getStatusVariant(complaint.status)} className="text-xs">{complaint.status}</Badge>
                         </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
+                          <DropdownMenu >
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8">
                                 <MoreHorizontal className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
+                            <DropdownMenuContent align="end" className="z-50 bg-white">
                               <DropdownMenuItem onClick={() => navigate(`/complaints/${complaint.id}`)}>
                                 View Details
                               </DropdownMenuItem>

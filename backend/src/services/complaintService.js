@@ -221,7 +221,7 @@ const complaintService = {
     const staff = await prisma.user.findUnique({
       where: { id: staffId }
     });
-
+    console.log('Assigning to staff:', staff);
     if (!staff || staff.role !== 'staff') {
       throw new Error('Invalid staff member');
     }
@@ -259,11 +259,18 @@ const complaintService = {
       emailTemplates.complaintAssigned(complaint.complaintCode, staff.name)
     );
 
+    sendEmail(
+      staff.email,
+      'Complaint Assigned to You',
+      emailTemplates.staffAssignment(complaint.complaintCode, complaint.title)
+    );
+
     return updated;
   },
 
   async addFeedback(complaintId, userId, rating, comment) {
     // Check if feedback already exists for this complaint
+    console.log(`Adding feedback for complaint ${complaintId} by user ${userId} with rating ${rating}`);
     const existingFeedback = await prisma.feedback.findUnique({
       where: { complaintId }
     });
@@ -274,7 +281,7 @@ const complaintService = {
       feedback = await prisma.feedback.update({
         where: { complaintId },
         data: {
-          user: { connect: { id: userId } },
+          userId,
           rating,
           comment
         }
@@ -284,7 +291,7 @@ const complaintService = {
       feedback = await prisma.feedback.create({
         data: {
           complaintId,
-          user: { connect: { id: userId } },
+          userId,
           rating,
           comment
         }
