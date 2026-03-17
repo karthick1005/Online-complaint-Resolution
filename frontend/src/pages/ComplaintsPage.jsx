@@ -76,6 +76,10 @@ export default function ComplaintsPage() {
       }
       
       const response = await complaintAPI.getComplaints(params)
+      if(filterDepartment !== 'all'){
+      response.data.data = response.data.data.filter((val) => val.departmentId === filterDepartment)
+      }
+      console.log(response.data.data)
       setComplaints(response.data.data || [])
     } catch (error) {
       console.error('Failed to fetch complaints:', error)

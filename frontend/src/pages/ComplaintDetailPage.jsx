@@ -1321,7 +1321,7 @@ export default function ComplaintDetailPage() {
       )}
 
       {/* Attachment Upload Section */}
-      {(currentUser?.role === 'complainant') && (
+      {/* {(currentUser?.role === 'complainant') && (
         <AttachmentUpload
           onFilesSelected={(files) => {
             // Handle file selection
@@ -1331,7 +1331,7 @@ export default function ComplaintDetailPage() {
           maxFiles={5}
           maxSize={10485760}
         />
-      )}
+      )} */}
 
       {/* Internal Notes Section */}
       {/* {(currentUser?.role === 'admin' || currentUser?.role === 'manager' || currentUser?.role === 'staff') && (
