@@ -79,11 +79,25 @@
   }
   body {
     @apply bg-background text-foreground;
+    padding-right: 0px !important;
+    margin-right: 0px !important;
   }
 }
 
 html {
   scroll-behavior: smooth;
+  overflow-y: scroll;
+}
+
+/* Prevent layout shift when modals/popovers open by overriding the injected Radix styles */
+html body[data-scroll-locked],
+html body.with-scroll-bars-hidden {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: auto !important;
+  overflow-y: scroll !important;
+  overscroll-behavior: auto !important;
+  position: static !important;
 }
 
 /* Modern Animations */
@@ -560,4 +574,27 @@ html {
 .stat-card p {
   color: #666;
   margin: 0;
+}
+
+@layer utilities {
+  .ease-spring {
+    transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: theme('colors.slate.300');
+    border-radius: 10px;
+  }
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: theme('colors.slate.700');
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.slate.400');
+  }
 }

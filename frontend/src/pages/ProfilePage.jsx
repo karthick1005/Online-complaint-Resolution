@@ -1,274 +1,88 @@
-import { useState } from 'react'
-import { Save, Lock, Mail, Phone, User as UserIcon } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { User, Mail, Shield, Phone, Building, Edit3, Key, Camera } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/ModernCard'
+import { ModernButton } from '@/components/ui/ModernButton'
 import { useToast } from '@/context/ToastContext'
-import { useTheme } from '@/context/ThemeContext'
-import { userAPI } from '@/api'
 
 export default function ProfilePage() {
   const { user } = useAuth()
   const { addToast } = useToast()
-  const { isDark, toggleTheme } = useTheme()
-
-  const [profileData, setProfileData] = useState({
+  const [profile, setProfile] = useState({
     name: user?.name || '',
     email: user?.email || '',
     phone: user?.phone || '',
+    department: user?.department?.name || 'N/A'
   })
-
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  })
-
-  const [loading, setLoading] = useState(false)
-
-  const handleProfileChange = (e) => {
-    const { name, value } = e.target
-    setProfileData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handlePasswordChange = (e) => {
-    const { name, value } = e.target
-    setPasswordData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault()
-    if (!profileData.name || !profileData.email) {
-      addToast('Name and email are required', 'error')
-      return
-    }
-
-    setLoading(true)
-    try {
-      await userAPI.updateUser(user.id, {
-        name: profileData.name,
-        phone: profileData.phone,
-      })
-      addToast('Profile updated successfully', 'success')
-    } catch (error) {
-      addToast(error.response?.data?.error || 'Failed to update profile', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleChangePassword = async (e) => {
-    e.preventDefault()
-
-    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-      addToast('All password fields are required', 'error')
-      return
-    }
-
-    if (passwordData.newPassword.length < 8) {
-      addToast('New password must be at least 8 characters', 'error')
-      return
-    }
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      addToast('Passwords do not match', 'error')
-      return
-    }
-
-    setLoading(true)
-    try {
-      await userAPI.changePassword({
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
-        confirmPassword: passwordData.confirmPassword,
-      })
-      setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      })
-      addToast('Password changed successfully', 'success')
-    } catch (error) {
-      addToast(error.response?.data?.error || 'Failed to change password', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="max-w-4xl mx-auto space-y-6"
+    >
+      <div className="flex flex-col md:flex-row gap-6 items-end justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Your Profile</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-2">Manage your account settings and preferences.</p>
+        </div>
+        <ModernButton icon={Edit3}>Edit Profile</ModernButton>
       </div>
 
-      {/* Profile Information */}
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserIcon className="w-5 h-5" />
-            Profile Information
-          </CardTitle>
-          <CardDescription>Update your personal information</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleUpdateProfile} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold">Full Name</label>
-                <Input
-                  name="name"
-                  value={profileData.name}
-                  onChange={handleProfileChange}
-                  placeholder="Your full name"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold">Phone</label>
-                <Input
-                  name="phone"
-                  value={profileData.phone}
-                  onChange={handleProfileChange}
-                  placeholder="Your phone number"
-                />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="md:col-span-1 rounded-2xl border-none shadow-xl shadow-slate-200/40 dark:shadow-none ring-1 ring-slate-200/50 dark:ring-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl relative overflow-hidden">
+          <div className="h-24 bg-gradient-to-r from-blue-600 to-indigo-600 absolute top-0 left-0 right-0" />
+          <CardContent className="pt-12 px-6 pb-6 relative z-10 flex flex-col items-center text-center">
+            <div className="relative group mb-4">
+              <div className="w-24 h-24 rounded-full bg-white dark:bg-slate-800 p-1 shadow-xl">
+                <div className="w-full h-full rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-3xl font-bold text-slate-600 dark:text-slate-300 overflow-hidden">
+                  {user?.name?.charAt(0) || 'U'}
+                </div>
               </div>
             </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                Email Address
-              </label>
-              <Input
-                name="email"
-                type="email"
-                value={profileData.email}
-                onChange={handleProfileChange}
-                disabled
-                className="bg-muted"
-              />
-              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold">Role</label>
-              <div className="px-3 py-2 border border-input rounded-lg bg-muted text-sm">
-                {user?.role?.replace('_', ' ') || 'N/A'}
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{user?.name}</h2>
+            <p className="text-sm font-medium text-blue-600 dark:text-blue-400 uppercase tracking-widest mt-1">{user?.role}</p>
+            
+            <div className="w-full h-px bg-slate-200 dark:bg-slate-800 my-6" />
+            
+            <div className="w-full space-y-4 text-left">
+              <div className="flex items-center gap-3 text-sm">
+                <Mail className="w-4 h-4 text-slate-400" />
+                <span className="text-slate-700 dark:text-slate-300">{user?.email}</span>
               </div>
+              {profile.phone && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Phone className="w-4 h-4 text-slate-400" />
+                  <span className="text-slate-700 dark:text-slate-300">{profile.phone}</span>
+                </div>
+              )}
             </div>
+          </CardContent>
+        </Card>
 
-            <Button type="submit" disabled={loading} className="gap-2 w-full">
-              <Save className="w-4 h-4" />
-              {loading ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Change Password */}
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="w-5 h-5" />
-            Change Password
-          </CardTitle>
-          <CardDescription>Update your password to keep your account secure</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleChangePassword} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold">Current Password</label>
-              <Input
-                name="currentPassword"
-                type="password"
-                value={passwordData.currentPassword}
-                onChange={handlePasswordChange}
-                placeholder="Enter current password"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold">New Password</label>
-                <Input
-                  name="newPassword"
-                  type="password"
-                  value={passwordData.newPassword}
-                  onChange={handlePasswordChange}
-                  placeholder="Enter new password"
-                />
+        <div className="md:col-span-2 space-y-6">
+          <Card className="rounded-2xl border-none shadow-xl shadow-slate-200/40 dark:shadow-none ring-1 ring-slate-200/50 dark:ring-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl">
+            <CardHeader className="border-b border-slate-100 dark:border-slate-800/60">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <User className="w-5 h-5 text-blue-500" /> Personal Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Full Name</label>
+                  <input readOnly value={profile.name} className="w-full h-10 px-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-sm opacity-70 cursor-not-allowed outline-none" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email Address</label>
+                  <input readOnly value={profile.email} className="w-full h-10 px-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-sm opacity-70 cursor-not-allowed outline-none" />
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold">Confirm Password</label>
-                <Input
-                  name="confirmPassword"
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={handlePasswordChange}
-                  placeholder="Confirm new password"
-                />
-              </div>
-            </div>
-
-            <p className="text-xs text-muted-foreground">
-              Password must be at least 8 characters
-            </p>
-
-            <Button type="submit" disabled={loading} className="gap-2 w-full">
-              <Lock className="w-4 h-4" />
-              {loading ? 'Updating...' : 'Update Password'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Preferences */}
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle>Preferences</CardTitle>
-          <CardDescription>Customize your experience</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
-            <div>
-              <p className="font-semibold">Dark Mode</p>
-              <p className="text-sm text-muted-foreground">
-                {isDark ? 'Dark mode is enabled' : 'Light mode is enabled'}
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              onClick={toggleTheme}
-              className="w-20"
-            >
-              {isDark ? 'Light' : 'Dark'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Account Information */}
-      <Card className="shadow-sm border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20">
-        <CardHeader>
-          <CardTitle className="text-base">Account Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <div className="flex justify-between">
-            <span>Account Created:</span>
-            <span className="font-semibold">Feb 04, 2026</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Last Login:</span>
-            <span className="font-semibold">Today at 10:30 AM</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Account Status:</span>
-            <span className="font-semibold text-green-600 dark:text-green-400">Active</span>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </motion.div>
   )
 }

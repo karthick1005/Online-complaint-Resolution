@@ -30,6 +30,7 @@ model User {
   historyUpdates     ComplaintHistory[]
   feedbacks          Feedback[]
   attachments        Attachment[]
+  notifications      Notification[] @relation("UserNotifications")
 
   // Indexes for query performance
   @@index([email])
@@ -215,3 +216,23 @@ model Feedback {
   @@index([rating])
   @@map("feedback")
 }
+
+// ============ NOTIFICATIONS ============
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("info") // success, error, info, warning
+  isRead    Boolean  @default(false) @map("is_read")
+  refId     String?  @map("ref_id") // ID of related complaint, etc.
+  refType   String?  @map("ref_type") // e.g., "complaint"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+

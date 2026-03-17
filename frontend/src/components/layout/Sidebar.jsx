@@ -164,14 +164,14 @@ export function Sidebar({ open, onClose }) {
                 {/* Actions */}
                 <div className="flex items-center gap-2">
                   {/* Notifications */}
-                  <Button
+                  {/* <Button
                     variant="outline"
                     size="icon"
                     className="flex-1 h-9"
                     title="Notifications"
                   >
                     <Bell className="w-4 h-4" />
-                  </Button>
+                  </Button> */}
 
                   {/* Theme Toggle */}
                   <Button
@@ -187,13 +187,26 @@ export function Sidebar({ open, onClose }) {
                       <Moon className="w-4 h-4" />
                     )}
                   </Button>
-
+                    <Button
+                  variant="outline"
+                  onClick={handleLogout}
+                  //  variant="outline"
+                    size="icon"
+                    // onClick={toggleTheme}
+                    className="flex-1 h-9"
+                    title="Logout"
+                  // className="w-full gap-2 h-9 text-xs"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </Button>
+                         {/* <Button variant="outline" size="icon" className="flex-1 h-9">
+                        <User className="w-4 h-4" />
+                      </Button> */}
                   {/* Profile/Settings Menu */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon" className="flex-1 h-9">
-                        <User className="w-4 h-4" />
-                      </Button>
+                   
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48 bg-background">
                       <DropdownMenuLabel className="font-normal text-xs">
@@ -220,14 +233,7 @@ export function Sidebar({ open, onClose }) {
                 </div>
 
                 {/* Logout Button - Mobile */}
-                <Button
-                  variant="outline"
-                  onClick={handleLogout}
-                  className="w-full gap-2 h-9 text-xs"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Logout
-                </Button>
+              
               </div>
             </>
           )}

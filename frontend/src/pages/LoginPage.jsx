@@ -1,20 +1,23 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { Eye, EyeOff, LogIn, Mail, Lock, UserPlus } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Mail, Lock, LogIn, AlertCircle, UserPlus } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { ModernButton } from '@/components/ui/ModernButton'
 import { useToast } from '@/context/ToastContext'
 
-const LoginPage = () => {
+export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
   const { addToast } = useToast()
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
     setLoading(true)
 
     try {
@@ -22,7 +25,7 @@ const LoginPage = () => {
       addToast('Login successful!', 'success')
       navigate('/dashboard')
     } catch (err) {
-      addToast(err.response?.data?.message || 'Login failed. Please try again.', 'error')
+      setError(err.response?.data?.error || 'Failed to sign in. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -41,85 +44,82 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center px-4 py-12 animate-fadeIn">
-      <div className="w-full max-w-md">
-        {/* Logo & Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl shadow-lg mb-4 animate-scaleIn">
-            <LogIn className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Welcome Back!
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Sign in to manage your complaints
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden selection:bg-blue-500/30">
+      {/* Decorative Background Elements */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/20 rounded-full blur-[120px] pointer-events-none" />
 
-        {/* Login Form Card */}
-        <div className="modern-card p-8 mb-6 animate-slideIn">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md relative z-10"
+      >
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20 dark:border-slate-800 ring-1 ring-slate-200/50 dark:ring-slate-800">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg transform -rotate-6 hover:rotate-0 transition-transform duration-300">
+              <span className="text-2xl font-black text-white">CR</span>
+            </div>
+            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Welcome Back</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-2">Sign in to manage your workspace.</p>
+          </div>
+
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl flex items-start gap-3 mb-6 border border-red-100 dark:border-red-900/50"
+            >
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              <p className="text-sm font-medium">{error}</p>
+            </motion.div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
-              </label>
+            <div className="space-y-1.5 focus-within:text-blue-600 dark:focus-within:text-blue-400 text-slate-500 transition-colors">
+              <label className="text-xs font-semibold uppercase tracking-wider ml-1">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5" />
+                </div>
                 <input
                   type="email"
-                  placeholder="you@example.com"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="modern-input pl-10"
+                  className="block w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 outline-none transition-all sm:text-sm shadow-inner"
+                  placeholder="name@example.com"
                 />
               </div>
             </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Password
-              </label>
+            <div className="space-y-1.5 focus-within:text-blue-600 dark:focus-within:text-blue-400 text-slate-500 transition-colors">
+              <div className="flex items-center justify-between ml-1">
+                <label className="text-xs font-semibold uppercase tracking-wider">Password</label>
+                <Link to="/forgot-password" className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400">Forgot?</Link>
+              </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5" />
+                </div>
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  type="password"
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="modern-input pl-10 pr-10"
+                  className="block w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 outline-none transition-all sm:text-sm shadow-inner"
+                  placeholder="••••••••"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
               </div>
             </div>
 
-            {/* Submit Button */}
-            <button
+            <ModernButton
               type="submit"
               disabled={loading}
-              className="btn btn-primary w-full btn-lg hover-lift"
+              className="w-full h-12 text-base mt-2"
+              icon={LogIn}
             >
-              {loading ? (
-                <>
-                  <div className="loading-spinner" />
-                  Signing in...
-                </>
-              ) : (
-                <>
-                  <LogIn className="w-5 h-5" />
-                  Sign In
-                </>
-              )}
-            </button>
+              {loading ? 'Signing in...' : 'Sign In'}
+            </ModernButton>
           </form>
 
           {/* Divider */}
@@ -172,15 +172,7 @@ const LoginPage = () => {
             ))}
           </div>
         </div>
-
-        {/* Footer */}
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-          Need help?{' '}
-          <a href="#" className="text-blue-600 dark:text-blue-400 hover:underline">Contact Support</a>
-        </p>
-      </div>
+      </motion.div>
     </div>
   )
 }
-
-export default LoginPage

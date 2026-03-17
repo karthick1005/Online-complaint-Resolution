@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const { generateComplaintCode, calculateSLADeadline } = require('../utils/complaintUtils');
 const { sendEmail, emailTemplates } = require('../utils/emailService');
+const notificationService = require('./notificationService');
 
 const prisma = new PrismaClient();
 
@@ -60,6 +61,16 @@ const complaintService = {
       'Complaint Registered',
       emailTemplates.complaintCreated(complaintCode, data.title)
     );
+
+    // Create In-App Notification
+    await notificationService.createNotification({
+      userId,
+      title: 'Complaint Registered',
+      message: `Your complaint #${complaintCode} has been successfully registered.`,
+      type: 'success',
+      refId: complaint.id,
+      refType: 'complaint'
+    });
 
     return complaint;
   },

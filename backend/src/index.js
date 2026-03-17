@@ -12,6 +12,7 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 const userRoutes = require('./routes/userRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const { slaEscalationJob } = require('./jobs/slaEscalation');
 
 const app = express();
@@ -47,6 +48,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check (no rate limit)
 app.get('/api/health', (req, res) => {
