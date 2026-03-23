@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
 const { generateComplaintCode, calculateSLADeadline } = require('../utils/complaintUtils');
+const { sendEmail } = require('../utils/emailService');
 
 const complaintService = {
   async createComplaint(data, userId) {
