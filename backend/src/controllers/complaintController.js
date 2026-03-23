@@ -1,5 +1,8 @@
 const prisma = require('../config/database');
 const complaintService = require('../services/complaintService');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 // Multer configuration
 const storage = multer.diskStorage({
