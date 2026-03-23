@@ -1,5 +1,9 @@
 const express = require('express');
 const prisma = require('../config/database');
+const authMiddleware = require('../middleware/authMiddleware');
+const rbacMiddleware = require('../middleware/rbacMiddleware');
+const validationMiddleware = require('../middleware/validationMiddleware');
+const { body } = require('express-validator');
 
 const router = express.Router();
 
