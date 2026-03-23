@@ -1,11 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../config/database');
 const complaintService = require('../services/complaintService');
-const { getLocationInfo } = require('../utils/geoLocation');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-
-const prisma = new PrismaClient();
 
 // Multer configuration
 const storage = multer.diskStorage({

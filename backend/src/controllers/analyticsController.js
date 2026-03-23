@@ -1,9 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+const prisma = require('../config/database');
 
 const analyticsController = {
-  async getDashboardStats(req, res) {
+  async getDashboardStats(req, res, next) {
     try {
       // Build filter based on user role
       let complaintFilter = {};
@@ -106,7 +104,7 @@ const analyticsController = {
         userRole: req.user.role
       });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      next(error);
     }
   }
 };

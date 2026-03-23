@@ -1,8 +1,6 @@
 const cron = require('node-cron');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../config/database');
 const { sendEmail, emailTemplates } = require('../utils/emailService');
-
-const prisma = new PrismaClient();
 
 // Check SLA breaches every hour
 const slaEscalationJob = cron.schedule('0 * * * *', async () => {

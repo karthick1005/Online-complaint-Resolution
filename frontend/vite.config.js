@@ -13,7 +13,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'https://onlinecomplaint.vercel.app',
+        target: 'https://onlinecomplaint-eisl.onrender.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/api')
       }

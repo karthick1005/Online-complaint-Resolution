@@ -1,8 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../config/database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
-const prisma = new PrismaClient();
 
 const authService = {
   async register(data) {

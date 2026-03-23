@@ -1,12 +1,7 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
-const { body } = require('express-validator');
-const authMiddleware = require('../middleware/authMiddleware');
-const rbacMiddleware = require('../middleware/rbacMiddleware');
-const validationMiddleware = require('../middleware/validationMiddleware');
+const prisma = require('../config/database');
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // All routes require authentication
 router.use(authMiddleware);
