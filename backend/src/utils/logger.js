@@ -12,8 +12,9 @@ const pino = require('pino');
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
   
-  // Pretty print in development
-  transport: process.env.NODE_ENV === 'development' 
+  // Pretty print only in development environment where pino-pretty is explicitly supported
+  // Serverless environments like Vercel should use default JSON logging
+  transport: (process.env.NODE_ENV === 'development' || process.env.ENABLE_PRETTY_LOGS === 'true')
     ? {
         target: 'pino-pretty',
         options: {

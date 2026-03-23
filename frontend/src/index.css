@@ -93,7 +93,9 @@ html {
 html body[data-scroll-locked],
 html body.with-scroll-bars-hidden {
   margin: 0 !important;
-  padding: 0 !important;
+  /* padding: 0 !important; */
+  padding-left: 12px !important;
+  padding-right: 0px !important;
   overflow: auto !important;
   overflow-y: scroll !important;
   overscroll-behavior: auto !important;
