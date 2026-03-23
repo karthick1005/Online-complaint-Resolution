@@ -75,7 +75,7 @@ const complaintCreationLimiter = rateLimit({
 /**
  * Dynamic rate limiter based on user role
  */
-const roleBased RateLimiter = (roleConfig) => {
+const roleBasedRateLimiter = (roleConfig) => {
   return (req, res, next) => {
     const userRole = req.user?.role || 'guest';
     const config = roleConfig[userRole] || roleConfig.default;
