@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
 const complaintService = require('../services/complaintService');
+const { getLocationInfo } = require('../utils/geoLocation');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
