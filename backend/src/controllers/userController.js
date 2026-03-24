@@ -1,147 +1,108 @@
 const userService = require('../services/userService');
 const { sendSuccess } = require('../utils/apiResponse');
+const {
+  BadRequestError,
+  ForbiddenError,
+} = require('../utils/errors');
 
 const userController = {
   // Create new user (admin only)
   async createUser(req, res) {
-    try {
-      const { name, email, phone, password, role, departmentId } = req.body;
+    const { name, email, phone, password, role, departmentId } = req.body;
 
-      // Validate required fields
-      if (!name || !email || !password || !role) {
-        return res.status(400).json({ 
-          error: 'Name, email, password, and role are required' 
-        });
-      }
-
-      const user = await userService.createUser({
-        name,
-        email,
-        phone,
-        password,
-        role,
-        departmentId
-      });
-
-      sendSuccess(res, {
-        statusCode: 201,
-        message: 'User created successfully',
-        data: user,
-      });
-    } catch (error) {
-      if (error.message.includes('already exists')) {
-        return res.status(400).json({ error: error.message });
-      }
-      res.status(400).json({ error: error.message });
+    if (!name || !email || !password || !role) {
+      throw new BadRequestError('Name, email, password, and role are required');
     }
+
+    const user = await userService.createUser({
+      name,
+      email,
+      phone,
+      password,
+      role,
+      departmentId
+    });
+
+    sendSuccess(res, {
+      statusCode: 201,
+      message: 'User created successfully',
+      data: user,
+    });
   },
 
   // Get all users (admin only)
   async getAllUsers(req, res) {
-    try {
-      console.log('Current user:', req.user);
-      const users = await userService.getAllUsers(req.query, req.user);
-      sendSuccess(res, users);
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
+    const users = await userService.getAllUsers(req.query, req.user);
+    sendSuccess(res, users);
   },
 
   // Get user by ID
   async getUserById(req, res) {
-    try {
-      const { id } = req.params;
-      const user = await userService.getUserById(id, req.user);
-      sendSuccess(res, { data: user });
-    } catch (error) {
-      if (error.message.includes('Unauthorized')) {
-        return res.status(403).json({ error: error.message });
-      }
-      res.status(404).json({ error: error.message });
-    }
+    const { id } = req.params;
+    const user = await userService.getUserById(id, req.user);
+    sendSuccess(res, { data: user });
   },
 
   // Update user
   async updateUser(req, res) {
-    try {
-      const { id } = req.params;
-      const { name, phone, role, departmentId, isActive } = req.body;
+    const { id } = req.params;
+    const { name, phone, role, departmentId, isActive } = req.body;
 
-      // Non-admin users can only update themselves
-      if (req.user.role !== 'admin' && req.user.id !== id && req.user.role !== 'department_manager') {
-        return res.status(403).json({ error: 'Unauthorized' });
-      }
-
-      const updateData = {};
-      if (name) updateData.name = name;
-      if (phone !== undefined) updateData.phone = phone;
-      if (isActive !== undefined) updateData.isActive = isActive;
-      if (role) updateData.role = role;
-      if (departmentId !== undefined) updateData.departmentId = departmentId;
-
-      const user = await userService.updateUser(id, updateData, req.user);
-
-      sendSuccess(res, {
-        message: 'User updated successfully',
-        data: user,
-      });
-    } catch (error) {
-      res.status(400).json({ error: error.message });
+    if (req.user.role !== 'admin' && req.user.id !== id && req.user.role !== 'department_manager') {
+      throw new ForbiddenError('Unauthorized');
     }
+
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (phone !== undefined) updateData.phone = phone;
+    if (isActive !== undefined) updateData.isActive = isActive;
+    if (role) updateData.role = role;
+    if (departmentId !== undefined) updateData.departmentId = departmentId;
+
+    const user = await userService.updateUser(id, updateData, req.user);
+
+    sendSuccess(res, {
+      message: 'User updated successfully',
+      data: user,
+    });
   },
 
   // Delete user (admin only)
   async deleteUser(req, res) {
-    try {
-      const { id } = req.params;
-      await userService.deleteUser(id, req.user.id);
-      sendSuccess(res, { message: 'User deleted successfully' });
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
+    const { id } = req.params;
+    await userService.deleteUser(id, req.user.id);
+    sendSuccess(res, { message: 'User deleted successfully' });
   },
 
   // Change password
   async changePassword(req, res) {
-    try {
-      const { currentPassword, newPassword, confirmPassword } = req.body;
-      const userId = req.user.id;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const userId = req.user.id;
 
-      if (newPassword !== confirmPassword) {
-        return res.status(400).json({ error: 'Passwords do not match' });
-      }
-
-      await userService.changePassword(userId, currentPassword, newPassword);
-
-      sendSuccess(res, { message: 'Password changed successfully' });
-    } catch (error) {
-      res.status(400).json({ error: error.message });
+    if (newPassword !== confirmPassword) {
+      throw new BadRequestError('Passwords do not match');
     }
+
+    await userService.changePassword(userId, currentPassword, newPassword);
+
+    sendSuccess(res, { message: 'Password changed successfully' });
   },
 
   // Get departments
   async getDepartments(req, res) {
-    try {
-      const departments = await userService.getDepartments();
-      sendSuccess(res, { data: departments });
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
+    const departments = await userService.getDepartments();
+    sendSuccess(res, { data: departments });
   },
 
   // Toggle user active status
   async toggleUserStatus(req, res) {
-    try {
-      const { id } = req.params;
-      const updatedUser = await userService.toggleUserStatus(id, req.user.id);
+    const { id } = req.params;
+    const updatedUser = await userService.toggleUserStatus(id, req.user.id);
 
-      sendSuccess(res, {
-        message: `User ${updatedUser.isActive ? 'activated' : 'deactivated'} successfully`,
-        data: updatedUser,
-      });
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
+    sendSuccess(res, {
+      message: `User ${updatedUser.isActive ? 'activated' : 'deactivated'} successfully`,
+      data: updatedUser,
+    });
   }
 };
 

@@ -1,6 +1,13 @@
 const prisma = require('../config/database');
 const bcrypt = require('bcrypt');
 const { buildPaginationMeta } = require('../utils/pagination');
+const {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} = require('../utils/errors');
 
 const userService = {
   // Create new user
@@ -13,7 +20,7 @@ const userService = {
     });
 
     if (existingUser) {
-      throw new Error('User with this email already exists');
+      throw new ConflictError('User with this email already exists');
     }
 
     // Hash password
@@ -90,8 +97,6 @@ async getAllUsers(query = {}, currentUser) {
     ];
   }
 
-  console.log('Fetching users with filters:', filters);
-
   const [users, totalItems] = await Promise.all([
     prisma.user.findMany({
       where: filters,
@@ -147,13 +152,13 @@ async getAllUsers(query = {}, currentUser) {
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User');
     }
 
     // Authorization check: Non-admin users can only view users from their department or themselves
     if (currentUser.role !== 'admin') {
       if (currentUser.id !== id && user.departmentId !== currentUser.departmentId) {
-        throw new Error('Unauthorized');
+        throw new UnauthorizedError('Unauthorized');
       }
     }
 
@@ -168,7 +173,7 @@ async getAllUsers(query = {}, currentUser) {
     // Only admin can change role and department
     if (requestingUser.role !== 'admin') {
       if (updateData.role || updateData.departmentId) {
-        throw new Error('Only admin can change role and department');
+        throw new ForbiddenError('Only admin can change role and department');
       }
     }
 
@@ -196,13 +201,13 @@ async getAllUsers(query = {}, currentUser) {
   async deleteUser(id, requestingUserId) {
     // Prevent deleting yourself
     if (requestingUserId === id) {
-      throw new Error('Cannot delete your own account');
+      throw new BadRequestError('Cannot delete your own account');
     }
 
     // Get user before deletion
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User');
     }
 
     // Soft delete by setting isActive to false
@@ -218,13 +223,13 @@ async getAllUsers(query = {}, currentUser) {
   async changePassword(id, oldPassword, newPassword) {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User');
     }
 
     // Verify old password
     const isValidPassword = await bcrypt.compare(oldPassword, user.passwordHash);
     if (!isValidPassword) {
-      throw new Error('Invalid old password');
+      throw new UnauthorizedError('Invalid old password');
     }
 
     // Hash new password
@@ -240,12 +245,12 @@ async getAllUsers(query = {}, currentUser) {
   async toggleUserStatus(id, requestingUserId) {
     // Prevent disabling yourself
     if (requestingUserId === id) {
-      throw new Error('Cannot change your own status');
+      throw new BadRequestError('Cannot change your own status');
     }
 
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User');
     }
 
     const updatedUser = await prisma.user.update({

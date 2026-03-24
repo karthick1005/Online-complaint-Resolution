@@ -1,16 +1,15 @@
 const cron = require('node-cron');
 const prisma = require('../config/database');
 const { sendEmail, emailTemplates } = require('../utils/emailService');
+const { logger } = require('../utils/logger');
 
 // Check SLA breaches every hour
 const slaEscalationJob = cron.schedule('0 * * * *', async () => {
   try {
-    console.log('🔄 Checking SLA breaches...');
-
     const breachedComplaints = await prisma.complaint.findMany({
       where: {
         slaDeadline: { lt: new Date() },
-        status: { not: 'Closed' }
+        status: { in: ['Registered', 'Assigned', 'InProgress'] }
       },
       include: { user: true, assignedTo: true }
     });
@@ -48,9 +47,16 @@ const slaEscalationJob = cron.schedule('0 * * * *', async () => {
       }
     }
 
-    console.log(`✅ SLA check completed. ${breachedComplaints.length} breaches found.`);
+    logger.info({
+      message: 'SLA breach scan completed',
+      breachedComplaintCount: breachedComplaints.length,
+    });
   } catch (error) {
-    console.error('❌ SLA escalation job error:', error);
+    logger.error({
+      message: 'SLA escalation job error',
+      error: error.message,
+      stack: error.stack,
+    });
   }
 });
 

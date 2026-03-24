@@ -1,6 +1,12 @@
 const prisma = require('../config/database');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const {
+  ConflictError,
+  NotFoundError,
+  UnauthorizedError,
+  ForbiddenError,
+} = require('../utils/errors');
 
 const authService = {
   async register(data) {
@@ -9,7 +15,7 @@ const authService = {
     });
 
     if (existingUser) {
-      throw new Error('Email already registered');
+      throw new ConflictError('Email already registered');
     }
 
     const passwordHash = await bcrypt.hash(data.password, 10);
@@ -38,15 +44,15 @@ const authService = {
     });
 
     if (!user) {
-      throw new Error('Invalid credentials');
+      throw new UnauthorizedError('Invalid credentials');
     }
 
     const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) {
-      throw new Error('Invalid credentials');
+      throw new UnauthorizedError('Invalid credentials');
     }
     if(!user.isActive){
-      throw new Error('Account is deactivated. Please contact support.');
+      throw new ForbiddenError('Account is deactivated. Please contact support.');
     }
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role,departmentId:user.departmentId },
@@ -75,7 +81,7 @@ const authService = {
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User');
     }
 
     return {

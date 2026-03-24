@@ -3,6 +3,11 @@ const { generateComplaintCode, calculateSLADeadline } = require('../utils/compla
 const { sendEmail, emailTemplates } = require('../utils/emailService');
 const notificationService = require('./notificationService');
 const { buildPaginationMeta } = require('../utils/pagination');
+const {
+  BadRequestError,
+  ForbiddenError,
+  NotFoundError,
+} = require('../utils/errors');
 
 const complaintService = {
   async createComplaint(data, userId) {
@@ -13,7 +18,7 @@ const complaintService = {
     });
 
     if (!category) {
-      throw new Error('Category not found');
+      throw new NotFoundError('Category');
     }
 
     const complaintCode = generateComplaintCode();
@@ -174,7 +179,7 @@ const complaintService = {
     });
 
     if (!complaint) {
-      throw new Error('Complaint not found');
+      throw new NotFoundError('Complaint');
     }
 
     return complaint;
@@ -182,17 +187,20 @@ const complaintService = {
 
   async updateComplaintStatus(complaintId, newStatus, comment, updatedBy, fileData = [], updatedByUser = null) {
     const complaint = await prisma.complaint.findUnique({
-      where: { id: complaintId }
+      where: { id: complaintId },
+      include: {
+        user: true,
+      }
     });
 
     if (!complaint) {
-      throw new Error('Complaint not found');
+      throw new NotFoundError('Complaint');
     }
 
     // For department managers: verify they can only update complaints in their department
     if (updatedByUser && updatedByUser.role === 'department_manager') {
       if (complaint.departmentId !== updatedByUser.departmentId) {
-        throw new Error('You can only update complaints from your department');
+        throw new ForbiddenError('You can only update complaints from your department');
       }
     }
 
@@ -209,7 +217,7 @@ const complaintService = {
     });
 
     // Add history entry with files
-    const historyEntry = await prisma.complaintHistory.create({
+    await prisma.complaintHistory.create({
       data: {
         complaintId,
         status: newStatus,
@@ -224,7 +232,7 @@ const complaintService = {
 
     // Send notification email
     sendEmail(
-      complaint.userId,
+      complaint.user.email,
       'Complaint Status Updated',
       emailTemplates.statusUpdate(complaint.complaintCode, newStatus)
     );
@@ -235,17 +243,20 @@ const complaintService = {
   async assignComplaint(complaintId, staffId, assignedBy, assignedByUser) {
     // Get complaint first
     const complaint = await prisma.complaint.findUnique({
-      where: { id: complaintId }
+      where: { id: complaintId },
+      include: {
+        user: true,
+      }
     });
 
     if (!complaint) {
-      throw new Error('Complaint not found');
+      throw new NotFoundError('Complaint');
     }
 
     // For department managers: verify they can only assign within their department
     if (assignedByUser.role === 'department_manager') {
       if (complaint.departmentId !== assignedByUser.departmentId) {
-        throw new Error('You can only assign complaints from your department');
+        throw new ForbiddenError('You can only assign complaints from your department');
       }
     }
 
@@ -253,15 +264,14 @@ const complaintService = {
     const staff = await prisma.user.findUnique({
       where: { id: staffId }
     });
-    console.log('Assigning to staff:', staff);
     if (!staff || staff.role !== 'staff') {
-      throw new Error('Invalid staff member');
+      throw new BadRequestError('Invalid staff member');
     }
 
     // For department managers: verify staff is from their department
     if (assignedByUser.role === 'department_manager') {
       if (staff.departmentId !== assignedByUser.departmentId) {
-        throw new Error('You can only assign to staff from your department');
+        throw new ForbiddenError('You can only assign to staff from your department');
       }
     }
 
@@ -302,7 +312,6 @@ const complaintService = {
 
   async addFeedback(complaintId, userId, rating, comment) {
     // Check if feedback already exists for this complaint
-    console.log(`Adding feedback for complaint ${complaintId} by user ${userId} with rating ${rating}`);
     const existingFeedback = await prisma.feedback.findUnique({
       where: { complaintId }
     });
@@ -351,11 +360,11 @@ const complaintService = {
     });
 
     if (!complaint) {
-      throw new Error('Complaint not found');
+      throw new NotFoundError('Complaint');
     }
 
     if (complaint.status !== 'Resolved' && complaint.status !== 'Closed') {
-      throw new Error('Only resolved or closed complaints can be reopened');
+      throw new BadRequestError('Only resolved or closed complaints can be reopened');
     }
 
     // Update complaint status back to InProgress

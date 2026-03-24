@@ -37,6 +37,7 @@ const userController = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
 const rbacMiddleware = require('../middleware/rbacMiddleware');
 const validationMiddleware = require('../middleware/validationMiddleware');
+const { asyncHandler } = require('../middleware/errorHandler');
 
 const router = express.Router();
 
@@ -103,7 +104,7 @@ router.post(
     body('departmentId').optional()
   ],
   validationMiddleware,
-  userController.createUser
+  asyncHandler(userController.createUser)
 );
 
 /**
@@ -147,7 +148,7 @@ router.post(
     body('confirmPassword').custom((v, { req }) => v === req.body.newPassword)
   ],
   validationMiddleware,
-  userController.changePassword
+  asyncHandler(userController.changePassword)
 );
 
 /**
@@ -173,7 +174,7 @@ router.post(
  *                       items:
  *                         $ref: '#/components/schemas/Department'
  */
-router.get('/departments/list', userController.getDepartments);
+router.get('/departments/list', asyncHandler(userController.getDepartments));
 
 /**
  * @swagger
@@ -219,10 +220,10 @@ router.post(
     body('departmentId').notEmpty()
   ],
   validationMiddleware,
-  (req, res, next) => {
+  asyncHandler(async (req, res) => {
     req.body.role = 'department_manager';
-    userController.createUser(req, res, next);
-  }
+    return userController.createUser(req, res);
+  })
 );
 
 /**
@@ -269,10 +270,10 @@ router.post(
     body('departmentId').notEmpty()
   ],
   validationMiddleware,
-  (req, res, next) => {
+  asyncHandler(async (req, res) => {
     req.body.role = 'staff';
-    userController.createUser(req, res, next);
-  }
+    return userController.createUser(req, res);
+  })
 );
 
 /**
@@ -328,7 +329,7 @@ router.post(
 router.get(
   '/',
   rbacMiddleware(['admin', 'department_manager']),
-  userController.getAllUsers
+  asyncHandler(userController.getAllUsers)
 );
 
 /**
@@ -352,7 +353,7 @@ router.get(
  *                     data:
  *                       $ref: '#/components/schemas/User'
  */
-router.get('/:id', userController.getUserById);
+router.get('/:id', asyncHandler(userController.getUserById));
 
 /**
  * @swagger
@@ -390,7 +391,7 @@ router.put(
     body('role').optional().isIn(['admin', 'department_manager', 'staff', 'complainant'])
   ],
   validationMiddleware,
-  userController.updateUser
+  asyncHandler(userController.updateUser)
 );
 
 /**
@@ -409,7 +410,7 @@ router.put(
 router.delete(
   '/:id',
   rbacMiddleware(['admin']),
-  userController.deleteUser
+  asyncHandler(userController.deleteUser)
 );
 
 /**
@@ -428,7 +429,7 @@ router.delete(
 router.post(
   '/:id/toggle-status',
   rbacMiddleware(['admin']),
-  userController.toggleUserStatus
+  asyncHandler(userController.toggleUserStatus)
 );
 
 module.exports = router;

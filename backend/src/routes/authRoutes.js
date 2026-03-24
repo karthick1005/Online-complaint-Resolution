@@ -2,6 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const validationMiddleware = require('../middleware/validationMiddleware');
+const { asyncHandler } = require('../middleware/errorHandler');
 
 const router = express.Router();
 
@@ -57,7 +58,7 @@ router.post(
     body('confirmPassword').custom((value, { req }) => value === req.body.password).withMessage('Passwords must match')
   ],
   validationMiddleware,
-  authController.register
+  asyncHandler(authController.register)
 );
 
 
@@ -110,7 +111,7 @@ router.post(
     body('password').notEmpty().withMessage('Password is required')
   ],
   validationMiddleware,
-  authController.login
+  asyncHandler(authController.login)
 );
 
 
@@ -141,6 +142,6 @@ router.post(
  *                               $ref: '#/components/schemas/DepartmentSummary'
  */
 const authMiddleware = require('../middleware/authMiddleware');
-router.get('/me', authMiddleware, authController.getMe);
+router.get('/me', authMiddleware, asyncHandler(authController.getMe));
 
 module.exports = router;
