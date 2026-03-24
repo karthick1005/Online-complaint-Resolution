@@ -1,3 +1,36 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: User management APIs
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         email:
+ *           type: string
+ *         phone:
+ *           type: string
+ *         role:
+ *           type: string
+ *           enum: [admin, department_manager, staff, complainant]
+ *         departmentId:
+ *           type: string
+ *         isActive:
+ *           type: boolean
+ *         createdAt:
+ *           type: string
+ */
+
 const express = require('express');
 const { body } = require('express-validator');
 const userController = require('../controllers/userController');
@@ -7,106 +40,214 @@ const validationMiddleware = require('../middleware/validationMiddleware');
 
 const router = express.Router();
 
-// All user routes require authentication
+// All routes require authentication
 router.use(authMiddleware);
 
-// Create user (admin only)
+/**
+ * @swagger
+ * /users:
+ *   post:
+ *     summary: Create user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Role - admin
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, email, password, role]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [admin, department_manager, staff, complainant]
+ *               departmentId:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User created
+ */
 router.post(
   '/',
   rbacMiddleware(['admin']),
   [
-    body('name').notEmpty().withMessage('Name is required'),
-    body('email').isEmail().withMessage('Valid email is required'),
-    body('phone').optional().isMobilePhone().withMessage('Valid phone is required'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-    body('role').notEmpty().isIn(['admin', 'department_manager', 'staff', 'complainant']).withMessage('Valid role is required'),
+    body('name').notEmpty(),
+    body('email').isEmail(),
+    body('phone').optional().isMobilePhone(),
+    body('password').isLength({ min: 6 }),
+    body('role').isIn(['admin', 'department_manager', 'staff', 'complainant']),
     body('departmentId').optional()
   ],
   validationMiddleware,
   userController.createUser
 );
 
-// Change password (must be before /:id routes)
+/**
+ * @swagger
+ * /users/change-password:
+ *   post:
+ *     summary: Change password
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.post(
   '/change-password',
   [
-    body('currentPassword').notEmpty().withMessage('Current password is required'),
-    body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
-    body('confirmPassword').custom((value, { req }) => value === req.body.newPassword).withMessage('Passwords must match')
+    body('currentPassword').notEmpty(),
+    body('newPassword').isLength({ min: 6 }),
+    body('confirmPassword').custom((v, { req }) => v === req.body.newPassword)
   ],
   validationMiddleware,
   userController.changePassword
 );
 
-// Get departments
+/**
+ * @swagger
+ * /users/departments/list:
+ *   get:
+ *     summary: Get departments list
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/departments/list', userController.getDepartments);
 
-// Create manager (admin only) - convenience route
+/**
+ * @swagger
+ * /users/create-manager:
+ *   post:
+ *     summary: Create department manager
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Role - admin
+ */
 router.post(
   '/create-manager',
   rbacMiddleware(['admin']),
   [
-    body('name').notEmpty().withMessage('Name is required'),
-    body('email').isEmail().withMessage('Valid email is required'),
-    body('phone').optional().isMobilePhone().withMessage('Valid phone is required'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-    body('departmentId').notEmpty().withMessage('Department is required')
+    body('name').notEmpty(),
+    body('email').isEmail(),
+    body('password').isLength({ min: 6 }),
+    body('departmentId').notEmpty()
   ],
   validationMiddleware,
-  async (req, res, next) => {
+  (req, res, next) => {
     req.body.role = 'department_manager';
     userController.createUser(req, res, next);
   }
 );
 
-// Create staff (admin and department_manager) - convenience route
+/**
+ * @swagger
+ * /users/create-staff:
+ *   post:
+ *     summary: Create staff user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Roles - admin, department_manager
+ */
 router.post(
   '/create-staff',
   rbacMiddleware(['admin', 'department_manager']),
   [
-    body('name').notEmpty().withMessage('Name is required'),
-    body('email').isEmail().withMessage('Valid email is required'),
-    body('phone').optional().isMobilePhone().withMessage('Valid phone is required'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-    body('departmentId').notEmpty().withMessage('Department is required')
+    body('name').notEmpty(),
+    body('email').isEmail(),
+    body('password').isLength({ min: 6 }),
+    body('departmentId').notEmpty()
   ],
   validationMiddleware,
-  async (req, res, next) => {
+  (req, res, next) => {
     req.body.role = 'staff';
     userController.createUser(req, res, next);
   }
 );
 
-// Get all users (admin only)
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Get all users
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Roles - admin, department_manager
+ */
 router.get(
   '/',
-  rbacMiddleware(['admin',"department_manager"]),
+  rbacMiddleware(['admin', 'department_manager']),
   userController.getAllUsers
 );
 
-// Get user by ID
+/**
+ * @swagger
+ * /users/{id}:
+ *   get:
+ *     summary: Get user by ID
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/:id', userController.getUserById);
 
-// Update user
+/**
+ * @swagger
+ * /users/{id}:
+ *   put:
+ *     summary: Update user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.put(
   '/:id',
   [
-    body('name').optional().notEmpty().withMessage('Name cannot be empty'),
-    body('phone').optional().isMobilePhone().withMessage('Valid phone is required'),
-    body('role').optional().isIn(['admin', 'department_manager', 'staff', 'complainant']),
+    body('name').optional().notEmpty(),
+    body('phone').optional().isMobilePhone(),
+    body('role').optional().isIn(['admin', 'department_manager', 'staff', 'complainant'])
   ],
   validationMiddleware,
   userController.updateUser
 );
 
-// Delete user (admin only)
+/**
+ * @swagger
+ * /users/{id}:
+ *   delete:
+ *     summary: Delete user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Role - admin
+ */
 router.delete(
   '/:id',
   rbacMiddleware(['admin']),
   userController.deleteUser
 );
 
-// Toggle user status (admin only)
+/**
+ * @swagger
+ * /users/{id}/toggle-status:
+ *   post:
+ *     summary: Toggle user active status
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Role - admin
+ */
 router.post(
   '/:id/toggle-status',
   rbacMiddleware(['admin']),

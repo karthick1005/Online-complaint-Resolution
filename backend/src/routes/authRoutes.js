@@ -5,7 +5,34 @@ const validationMiddleware = require('../middleware/validationMiddleware');
 
 const router = express.Router();
 
-// Register
+
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               confirmPassword:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User registered
+ */
 router.post(
   '/register',
   [
@@ -19,7 +46,28 @@ router.post(
   authController.register
 );
 
-// Login
+
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login a user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User logged in
+ */
 router.post(
   '/login',
   [
@@ -30,7 +78,19 @@ router.post(
   authController.login
 );
 
-// Get current user (protected)
+
+/**
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: Get current user
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user info
+ */
 const authMiddleware = require('../middleware/authMiddleware');
 router.get('/me', authMiddleware, authController.getMe);
 

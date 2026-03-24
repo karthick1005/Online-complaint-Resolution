@@ -116,21 +116,21 @@ export default function ManagerManagement() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 md:gap-6">
           <div className="stats-card bg-gradient-to-br from-cyan-500 to-blue-600 text-white p-3 sm:p-4 rounded-lg overflow-hidden">
-            <div className="relative z-10">
+            <div className="relative ">
               <p className="text-cyan-100 text-xs font-medium mb-1">Total Managers</p>
               <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{managers.length}</p>
             </div>
             <Shield className="absolute -bottom-1 -right-1 sm:bottom-1 sm:right-1 w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 opacity-20" />
           </div>
           <div className="stats-card bg-gradient-to-br from-purple-500 to-pink-600 text-white p-3 sm:p-4 rounded-lg overflow-hidden">
-            <div className="relative z-10">
+            <div className="relative ">
               <p className="text-purple-100 text-xs font-medium mb-1">Departments</p>
               <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{departments.length}</p>
             </div>
             <Building2 className="absolute -bottom-1 -right-1 sm:bottom-1 sm:right-1 w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 opacity-20" />
           </div>
           <div className="stats-card bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-3 sm:p-4 rounded-lg overflow-hidden col-span-2 md:col-span-1">
-            <div className="relative z-10">
+            <div className="relative ">
               <p className="text-emerald-100 text-xs font-medium mb-1">Active</p>
               <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{managers.filter(m => m.isActive).length}</p>
             </div>

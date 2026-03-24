@@ -15,6 +15,10 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const { slaEscalationJob } = require('./jobs/slaEscalation');
 
+// Swagger setup
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+
 const app = express();
 
 // Security headers (apply first)
@@ -23,7 +27,7 @@ securityHeaders.forEach((middleware) => app.use(middleware));
 // CORS configuration
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
   })
 );
@@ -35,8 +39,33 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Request logging (after body parsing)
 app.use(requestLogger);
 
+
 // Static files
 app.use('/uploads', express.static('uploads'));
+
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Online Complaint Resolution System API',
+      version: '1.0.0',
+      description: 'API documentation for all endpoints',
+    },
+    servers: [
+      {
+        url: '/api',
+        description: 'API server',
+      },
+    ],
+  },
+  apis: ['./src/routes/*.js', './src/controllers/*.js'], // Path to the API docs
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
+// Swagger UI route (after swaggerSpec is defined)
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Apply rate limiting to all API routes
 app.use('/api', apiLimiter);

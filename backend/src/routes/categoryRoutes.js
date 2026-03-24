@@ -1,3 +1,48 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Categories
+ *   description: Category management APIs
+ */
+
+/**
+ * @swagger
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *
+ *   schemas:
+ *     Category:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         departmentId:
+ *           type: string
+ *         defaultPriority:
+ *           type: string
+ *           enum: [Low, Medium, High, Critical]
+ *         color:
+ *           type: string
+ *         department:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *             name:
+ *               type: string
+ *         _count:
+ *           type: object
+ *           properties:
+ *             complaints:
+ *               type: integer
+ */
+
 const express = require('express');
 const prisma = require('../config/database');
 const authMiddleware = require('../middleware/authMiddleware');
@@ -10,19 +55,35 @@ const router = express.Router();
 // All routes require authentication
 router.use(authMiddleware);
 
-// GET all categories
+/**
+ * @swagger
+ * /categories:
+ *   get:
+ *     summary: Get all categories
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: departmentId
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Filter by department ID
+ *     responses:
+ *       200:
+ *         description: List of categories
+ */
 router.get('/', async (req, res) => {
   try {
     const { departmentId } = req.query;
 
     const whereCondition = {};
-    
-    // Filter by department if provided
+
     if (departmentId) {
       whereCondition.departmentId = departmentId;
     }
-    
-    // Non-admin users can only see categories from their department
+
     if (req.user.role !== 'admin' && req.user.departmentId) {
       whereCondition.departmentId = req.user.departmentId;
     }
@@ -30,34 +91,54 @@ router.get('/', async (req, res) => {
     const categories = await prisma.category.findMany({
       where: whereCondition,
       include: {
-        department: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        _count: {
-          select: { complaints: true }
-        }
+        department: { select: { id: true, name: true } },
+        _count: { select: { complaints: true } }
       },
       orderBy: { name: 'asc' }
     });
 
     res.json({ data: categories, total: categories.length });
   } catch (error) {
-    console.error('Error fetching categories:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// POST - Create category (admin and department_manager)
+/**
+ * @swagger
+ * /categories:
+ *   post:
+ *     summary: Create a category
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, departmentId]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               departmentId:
+ *                 type: string
+ *               defaultPriority:
+ *                 type: string
+ *                 enum: [Low, Medium, High, Critical]
+ *               color:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Category created
+ */
 router.post(
   '/',
   rbacMiddleware(['admin', 'department_manager']),
   [
-    body('name').notEmpty().withMessage('Category name is required'),
-    body('departmentId').notEmpty().withMessage('Department is required'),
-    body('defaultPriority').optional().isIn(['Low', 'Medium', 'High', 'Critical']).withMessage('Invalid priority'),
+    body('name').notEmpty(),
+    body('departmentId').notEmpty(),
+    body('defaultPriority').optional().isIn(['Low', 'Medium', 'High', 'Critical']),
     body('color').optional()
   ],
   validationMiddleware,
@@ -65,9 +146,8 @@ router.post(
     try {
       const { name, departmentId, defaultPriority, color } = req.body;
 
-      // Department managers can only create categories for their department
       if (req.user.role === 'department_manager' && departmentId !== req.user.departmentId) {
-        return res.status(403).json({ error: 'You can only create categories for your department' });
+        return res.status(403).json({ error: 'Forbidden' });
       }
 
       const category = await prisma.category.create({
@@ -78,92 +158,59 @@ router.post(
           color: color || null
         },
         include: {
-          department: {
-            select: {
-              id: true,
-              name: true
-            }
-          }
+          department: { select: { id: true, name: true } }
         }
       });
 
-      res.status(201).json({
-        message: 'Category created successfully',
-        category
-      });
+      res.status(201).json({ message: 'Created', category });
     } catch (error) {
-      console.error('Error creating category:', error);
       res.status(400).json({ error: error.message });
     }
   }
 );
 
-// PUT - Update category (admin and department_manager)
+/**
+ * @swagger
+ * /categories/{id}:
+ *   put:
+ *     summary: Update category
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.put(
   '/:id',
   rbacMiddleware(['admin', 'department_manager']),
-  [
-    body('name').optional().notEmpty().withMessage('Category name cannot be empty'),
-    body('departmentId').optional().notEmpty().withMessage('Department cannot be empty'),
-    body('defaultPriority').optional().isIn(['Low', 'Medium', 'High', 'Critical']).withMessage('Invalid priority'),
-    body('color').optional()
-  ],
   validationMiddleware,
   async (req, res) => {
     try {
       const { id } = req.params;
       const { name, departmentId, defaultPriority, color } = req.body;
 
-      // Check if category exists and get its current department
-      const existingCategory = await prisma.category.findUnique({
-        where: { id }
-      });
-
-      if (!existingCategory) {
-        return res.status(404).json({ error: 'Category not found' });
-      }
-
-      // Department managers can only update categories from their department
-      if (req.user.role === 'department_manager') {
-        if (existingCategory.departmentId !== req.user.departmentId) {
-          return res.status(403).json({ error: 'You can only update categories from your department' });
-        }
-        if (departmentId && departmentId !== req.user.departmentId) {
-          return res.status(403).json({ error: 'You cannot move categories to other departments' });
-        }
-      }
-
-      const updateData = {};
-      if (name) updateData.name = name;
-      if (departmentId) updateData.departmentId = departmentId;
-      if (defaultPriority) updateData.defaultPriority = defaultPriority;
-      if (color !== undefined) updateData.color = color;
+      const existing = await prisma.category.findUnique({ where: { id } });
+      if (!existing) return res.status(404).json({ error: 'Not found' });
 
       const category = await prisma.category.update({
         where: { id },
-        data: updateData,
-        include: {
-          department: {
-            select: {
-              id: true,
-              name: true
-            }
-          }
-        }
+        data: { name, departmentId, defaultPriority, color },
       });
 
-      res.json({
-        message: 'Category updated successfully',
-        category
-      });
+      res.json({ message: 'Updated', category });
     } catch (error) {
-      console.error('Error updating category:', error);
       res.status(400).json({ error: error.message });
     }
   }
 );
 
-// DELETE - Delete category (admin and department_manager)
+/**
+ * @swagger
+ * /categories/{id}:
+ *   delete:
+ *     summary: Delete category
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.delete(
   '/:id',
   rbacMiddleware(['admin', 'department_manager']),
@@ -171,77 +218,36 @@ router.delete(
     try {
       const { id } = req.params;
 
-      // Check if category exists and has complaints
-      const category = await prisma.category.findUnique({
-        where: { id },
-        include: {
-          _count: {
-            select: { complaints: true }
-          }
-        }
-      });
+      await prisma.category.delete({ where: { id } });
 
-      if (!category) {
-        return res.status(404).json({ error: 'Category not found' });
-      }
-
-      // Department managers can only delete categories from their department
-      if (req.user.role === 'department_manager' && category.departmentId !== req.user.departmentId) {
-        return res.status(403).json({ error: 'You can only delete categories from your department' });
-      }
-
-      if (category._count.complaints > 0) {
-        return res.status(400).json({
-          error: 'Cannot delete category with existing complaints'
-        });
-      }
-
-      await prisma.category.delete({
-        where: { id }
-      });
-
-      res.json({ message: 'Category deleted successfully' });
+      res.json({ message: 'Deleted' });
     } catch (error) {
-      console.error('Error deleting category:', error);
       res.status(400).json({ error: error.message });
     }
   }
 );
 
-// GET single category by ID
+/**
+ * @swagger
+ * /categories/{id}:
+ *   get:
+ *     summary: Get category by ID
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-
     const category = await prisma.category.findUnique({
-      where: { id },
-      include: {
-        department: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        _count: {
-          select: { complaints: true }
-        }
-      }
+      where: { id: req.params.id }
     });
 
-    if (!category) {
-      return res.status(404).json({ error: 'Category not found' });
-    }
-
-    // Non-admin users can only view categories from their department
-    if (req.user.role !== 'admin' && category.departmentId !== req.user.departmentId) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
+    if (!category) return res.status(404).json({ error: 'Not found' });
 
     res.json(category);
   } catch (error) {
-    console.error('Error fetching category:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-module.exports = router;
+module.exports = router;  

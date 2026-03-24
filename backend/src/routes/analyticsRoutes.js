@@ -5,7 +5,19 @@ const rbacMiddleware = require('../middleware/rbacMiddleware');
 
 const router = express.Router();
 
-// Analytics routes (admin, managers, complainants)
+
+/**
+ * @swagger
+ * /analytics/dashboard/stats:
+ *   get:
+ *     summary: Get dashboard statistics
+ *     tags: [Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard statistics
+ */
 router.get(
   '/dashboard/stats',
   authMiddleware,
