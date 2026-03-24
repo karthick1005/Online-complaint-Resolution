@@ -49,6 +49,17 @@ router.use(authMiddleware);
  *     responses:
  *       200:
  *         description: List of categories
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Category'
  */
 router.get('/meta/categories', complaintController.getCategories);
 
@@ -63,6 +74,17 @@ router.get('/meta/categories', complaintController.getCategories);
  *     responses:
  *       200:
  *         description: List of staff
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/User'
  */
 router.get('/meta/staff', complaintController.getStaff);
 
@@ -91,9 +113,32 @@ router.get('/meta/staff', complaintController.getStaff);
  *               files:
  *                 type: string
  *                 format: binary
+ *           encoding:
+ *             files:
+ *               style: form
+ *               explode: true
+ *           examples:
+ *             seededComplaint:
+ *               $ref: '#/components/examples/CreateComplaintExample'
  *     responses:
  *       201:
  *         description: Complaint created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         complaint:
+ *                           $ref: '#/components/schemas/ComplaintDetail'
+ *                         locationDetected:
+ *                           type: string
+ *                         locationInfo:
+ *                           type: object
  */
 router.post(
   '/',
@@ -115,9 +160,51 @@ router.post(
  *     tags: [Complaints]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           example: Registered
+ *       - in: query
+ *         name: priority
+ *         schema:
+ *           type: string
+ *           example: High
+ *       - in: query
+ *         name: departmentId
+ *         schema:
+ *           type: string
+ *           example: clxdeptinfra
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *           example: pothole
  *     responses:
  *       200:
  *         description: List of complaints
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/ComplaintListItem'
  */
 router.get('/', complaintController.getComplaints);
 
@@ -138,6 +225,15 @@ router.get('/', complaintController.getComplaints);
  *     responses:
  *       200:
  *         description: Complaint details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/ComplaintDetail'
  *       404:
  *         description: Complaint not found
  */
@@ -168,9 +264,21 @@ router.get('/:id', complaintController.getComplaintById);
  *               file:
  *                 type: string
  *                 format: binary
+ *           examples:
+ *             inProgress:
+ *               $ref: '#/components/examples/UpdateStatusExample'
  *     responses:
  *       200:
  *         description: Status updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/ComplaintDetail'
  */
 router.put(
   '/:id/status',
@@ -204,9 +312,21 @@ router.put(
  *             properties:
  *               staffId:
  *                 type: string
+ *           examples:
+ *             assignInfraStaff:
+ *               $ref: '#/components/examples/AssignComplaintExample'
  *     responses:
  *       200:
  *         description: Assigned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/ComplaintDetail'
  */
 router.post(
   '/:id/assign',
@@ -238,9 +358,18 @@ router.post(
  *                 type: integer
  *                 minimum: 1
  *                 maximum: 5
+ *               comment:
+ *                 type: string
+ *           examples:
+ *             closeWithFeedback:
+ *               $ref: '#/components/examples/FeedbackExample'
  *     responses:
  *       200:
  *         description: Feedback added
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StandardResponse'
  */
 router.post(
   '/:id/feedback',
@@ -257,6 +386,13 @@ router.post(
  *     tags: [Complaints]
  *     security:
  *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Attachment list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StandardResponse'
  */
 router.get('/:id/attachments', complaintController.getAttachments);
 
@@ -291,6 +427,22 @@ router.get('/status-file/:fileId/download', complaintController.downloadStatusUp
  *     security:
  *       - bearerAuth: []
  *     description: Roles - staff, department_manager, admin
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [comment]
+ *             properties:
+ *               comment:
+ *                 type: string
+ *           examples:
+ *             internalNote:
+ *               $ref: '#/components/examples/InternalCommentExample'
+ *     responses:
+ *       200:
+ *         description: Internal comment added
  */
 router.post(
   '/:id/comments',
@@ -308,6 +460,9 @@ router.post(
  *     tags: [Complaints]
  *     security:
  *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Internal comments list
  */
 router.get(
   '/:id/comments',
@@ -324,6 +479,22 @@ router.get(
  *     security:
  *       - bearerAuth: []
  *     description: Roles - admin, department_manager
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [reason]
+ *             properties:
+ *               reason:
+ *                 type: string
+ *           examples:
+ *             slaRisk:
+ *               $ref: '#/components/examples/EscalateComplaintExample'
+ *     responses:
+ *       200:
+ *         description: Complaint escalated
  */
 router.post(
   '/:id/escalate',
@@ -342,6 +513,20 @@ router.post(
  *     security:
  *       - bearerAuth: []
  *     description: Role - complainant
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *           examples:
+ *             reopenAfterRain:
+ *               $ref: '#/components/examples/ReopenComplaintExample'
+ *     responses:
+ *       200:
+ *         description: Complaint reopened
  */
 router.post(
   '/:id/reopen',

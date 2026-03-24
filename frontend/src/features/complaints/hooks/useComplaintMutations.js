@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { complaintAPI } from '@/api';
+import { complaintAPI, getResponseData } from '@/api';
 import { queryKeys, invalidateQueries } from '@/services/api/queryClient';
 import { useToast } from '@/context/ToastContext';
 
@@ -19,7 +19,7 @@ export const useCreateComplaint = () => {
   return useMutation({
     mutationFn: async ({ data, files }) => {
       const response = await complaintAPI.createComplaint(data, files);
-      return response.data;
+      return getResponseData(response, null);
     },
     onSuccess: (data) => {
       // Invalidate complaints list to trigger refetch
@@ -45,7 +45,7 @@ export const useUpdateComplaintStatus = () => {
   return useMutation({
     mutationFn: async ({ id, status, comment, files }) => {
       const response = await complaintAPI.updateStatus(id, status, comment, files);
-      return response.data;
+      return getResponseData(response, null);
     },
     onMutate: async ({ id, status }) => {
       // Cancel outgoing refetches
@@ -94,7 +94,7 @@ export const useAssignComplaint = () => {
   return useMutation({
     mutationFn: async ({ id, staffId }) => {
       const response = await complaintAPI.assignComplaint(id, staffId);
-      return response.data;
+      return getResponseData(response, null);
     },
     onSuccess: (data, variables) => {
       invalidateQueries.complaint(variables.id);
@@ -118,7 +118,7 @@ export const useAddFeedback = () => {
   return useMutation({
     mutationFn: async ({ id, rating, comment }) => {
       const response = await complaintAPI.addFeedback(id, rating, comment);
-      return response.data;
+      return getResponseData(response, null);
     },
     onSuccess: (data, variables) => {
       invalidateQueries.complaint(variables.id);
@@ -143,7 +143,7 @@ export const useEscalateComplaint = () => {
   return useMutation({
     mutationFn: async ({ id, reason }) => {
       const response = await complaintAPI.escalateComplaint(id, reason);
-      return response.data;
+      return getResponseData(response, null);
     },
     onSuccess: (data, variables) => {
       invalidateQueries.complaint(variables.id);
@@ -168,7 +168,7 @@ export const useReopenComplaint = () => {
   return useMutation({
     mutationFn: async ({ id, reason }) => {
       const response = await complaintAPI.reopenComplaint(id, reason);
-      return response.data;
+      return getResponseData(response, null);
     },
     onSuccess: (data, variables) => {
       invalidateQueries.complaint(variables.id);

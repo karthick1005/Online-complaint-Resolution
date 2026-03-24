@@ -1,4 +1,5 @@
 const authService = require('../services/authService');
+const { sendSuccess } = require('../utils/apiResponse');
 
 const authController = {
   async register(req, res) {
@@ -16,9 +17,10 @@ const authController = {
         password
       });
 
-      res.status(201).json({
+      sendSuccess(res, {
+        statusCode: 201,
         message: 'User registered successfully',
-        user
+        data: user,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -31,9 +33,9 @@ const authController = {
 
       const result = await authService.login(email, password);
 
-      res.json({
+      sendSuccess(res, {
         message: 'Login successful',
-        ...result
+        data: result,
       });
     } catch (error) {
       res.status(401).json({ error: error.message });
@@ -43,7 +45,7 @@ const authController = {
   async getMe(req, res) {
     try {
       const user = await authService.getMe(req.user.id);
-      res.json(user);
+      sendSuccess(res, { data: user });
     } catch (error) {
       res.status(404).json({ error: error.message });
     }

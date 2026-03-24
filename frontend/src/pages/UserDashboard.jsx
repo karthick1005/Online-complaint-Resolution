@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
-import { complaintAPI } from '@/api'
+import { complaintAPI, getResponseData } from '@/api'
 import { useNavigate } from 'react-router-dom'
 
 export default function UserDashboard() {
@@ -22,7 +22,7 @@ export default function UserDashboard() {
         const params = {}
         if (filterStatus !== 'all') params.status = filterStatus
         const response = await complaintAPI.getComplaints(params)
-        setComplaints(response.data.data || [])
+        setComplaints(getResponseData(response, []))
       } catch (error) {
         console.error('Error fetching complaints:', error)
       } finally {

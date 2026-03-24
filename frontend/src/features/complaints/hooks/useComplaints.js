@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { complaintAPI } from '@/api';
+import { complaintAPI, getResponseData, getResponsePagination } from '@/api';
 import { queryKeys } from '@/services/api/queryClient';
 
 /**
@@ -26,7 +26,10 @@ export const useComplaints = (filters = {}, options = {}) => {
     queryKey: queryKeys.complaints.list(filters),
     queryFn: async () => {
       const response = await complaintAPI.getComplaints(filters);
-      return response.data.data || [];
+      return {
+        data: getResponseData(response, []),
+        pagination: getResponsePagination(response),
+      };
     },
     // Keep previous data while fetching new filtered results
     keepPreviousData: true,
@@ -38,7 +41,8 @@ export const useComplaints = (filters = {}, options = {}) => {
   });
 
   return {
-    complaints: data || [],
+    complaints: data?.data || [],
+    pagination: data?.pagination || null,
     isLoading,
     isError,
     error,

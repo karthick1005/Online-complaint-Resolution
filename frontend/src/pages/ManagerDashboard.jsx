@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { AlertCircle, CheckCircle, Clock, TrendingUp, Users, BarChart3, FileText, UserPlus, Layers, Search } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useNavigate } from 'react-router-dom'
-import api from '@/api'
+import api, { getResponseData } from '@/api'
 
 export default function ManagerDashboard() {
   const { user } = useAuth()
@@ -28,10 +28,10 @@ export default function ManagerDashboard() {
       if (filterStatus !== 'all') params.status = filterStatus
       
       const response = await api.get('/complaints', { params })
-      setComplaints(response.data.data || [])
+      setComplaints(getResponseData(response, []))
 
       // Calculate stats
-      const allComplaints = response.data.data || []
+      const allComplaints = getResponseData(response, [])
       setStats({
         total: allComplaints.length,
         registered: allComplaints.filter(c => c.status === 'Registered').length,
@@ -244,13 +244,14 @@ export default function ManagerDashboard() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search complaints..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="modern-input pl-10"
+                  className="modern-input pl-12"
+                  style={{ paddingLeft: '3rem' }}
                 />
               </div>
 

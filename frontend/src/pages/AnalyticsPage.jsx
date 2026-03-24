@@ -3,7 +3,7 @@ import { BarChart3, TrendingUp, Calendar, Download } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { analyticsAPI } from '@/api'
+import { analyticsAPI, getResponseData } from '@/api'
 import { useToast } from '@/context/ToastContext'
 import { useAuth } from '@/context/AuthContext'
 
@@ -22,7 +22,7 @@ export default function AnalyticsPage() {
     try {
       setLoading(true)
       const response = await analyticsAPI.getDashboardStats()
-      setStats(response.data)
+      setStats(getResponseData(response, null))
     } catch (error) {
       addToast('Failed to load analytics', 'error')
       console.error('Failed to fetch analytics:', error)

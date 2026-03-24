@@ -73,9 +73,23 @@ router.use(authMiddleware);
  *                 enum: [admin, department_manager, staff, complainant]
  *               departmentId:
  *                 type: string
+ *           examples:
+ *             manager:
+ *               $ref: '#/components/examples/CreateManagerExample'
+ *             staff:
+ *               $ref: '#/components/examples/CreateStaffExample'
  *     responses:
  *       201:
  *         description: User created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/User'
  */
 router.post(
   '/',
@@ -100,6 +114,30 @@ router.post(
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [currentPassword, newPassword, confirmPassword]
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 example: Admin@123
+ *               newPassword:
+ *                 type: string
+ *                 example: Admin@1234
+ *               confirmPassword:
+ *                 type: string
+ *                 example: Admin@1234
+ *     responses:
+ *       200:
+ *         description: Password changed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StandardResponse'
  */
 router.post(
   '/change-password',
@@ -120,6 +158,20 @@ router.post(
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Department lookup list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Department'
  */
 router.get('/departments/list', userController.getDepartments);
 
@@ -132,6 +184,30 @@ router.get('/departments/list', userController.getDepartments);
  *     security:
  *       - bearerAuth: []
  *     description: Role - admin
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, email, password, departmentId]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               departmentId:
+ *                 type: string
+ *           examples:
+ *             seededStyleManager:
+ *               $ref: '#/components/examples/CreateManagerExample'
+ *     responses:
+ *       201:
+ *         description: Department manager created
  */
 router.post(
   '/create-manager',
@@ -158,6 +234,30 @@ router.post(
  *     security:
  *       - bearerAuth: []
  *     description: Roles - admin, department_manager
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, email, password, departmentId]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               departmentId:
+ *                 type: string
+ *           examples:
+ *             seededStyleStaff:
+ *               $ref: '#/components/examples/CreateStaffExample'
+ *     responses:
+ *       201:
+ *         description: Staff user created
  */
 router.post(
   '/create-staff',
@@ -184,6 +284,46 @@ router.post(
  *     security:
  *       - bearerAuth: []
  *     description: Roles - admin, department_manager
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *           example: manager
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *           example: department_manager
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           example: active
+ *     responses:
+ *       200:
+ *         description: Paginated users list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/User'
  */
 router.get(
   '/',
@@ -199,6 +339,18 @@ router.get(
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User detail
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/User'
  */
 router.get('/:id', userController.getUserById);
 
@@ -210,6 +362,25 @@ router.get('/:id', userController.getUserById);
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *               departmentId:
+ *                 type: string
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: User updated
  */
 router.put(
   '/:id',
@@ -231,6 +402,9 @@ router.put(
  *     security:
  *       - bearerAuth: []
  *     description: Role - admin
+ *     responses:
+ *       200:
+ *         description: User deleted
  */
 router.delete(
   '/:id',
@@ -247,6 +421,9 @@ router.delete(
  *     security:
  *       - bearerAuth: []
  *     description: Role - admin
+ *     responses:
+ *       200:
+ *         description: User toggled active or inactive
  */
 router.post(
   '/:id/toggle-status',

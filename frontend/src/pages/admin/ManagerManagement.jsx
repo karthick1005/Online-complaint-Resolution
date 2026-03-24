@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useDeferredValue, useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, UserCog, Mail, Phone, Building2, Search, Shield } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
-import api from '@/api';
+import api, { getResponseData, getResponsePagination } from '@/api';
+import { Pagination } from '@/components/ui/Pagination';
 
 export default function ManagerManagement() {
   const [managers, setManagers] = useState([]);
@@ -10,6 +11,9 @@ export default function ManagerManagement() {
   const [showModal, setShowModal] = useState(false);
   const [editingManager, setEditingManager] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [pagination, setPagination] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,20 +22,33 @@ export default function ManagerManagement() {
     departmentId: ''
   });
   const { addToast } = useToast();
+  const deferredSearchTerm = useDeferredValue(searchTerm);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, itemsPerPage, deferredSearchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, itemsPerPage]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const [managersRes, deptsRes] = await Promise.all([
-        api.get('/users?role=department_manager'),
-        api.get('/departments')
+        api.get('/users', {
+          params: {
+            role: 'department_manager',
+            page: currentPage,
+            pageSize: itemsPerPage,
+            search: deferredSearchTerm.trim() || undefined,
+          }
+        }),
+        api.get('/departments', { params: { pageSize: 100 } })
       ]);
-      setManagers(managersRes.data.data || []);
-      setDepartments(deptsRes.data || []);
+      setManagers(getResponseData(managersRes, []));
+      setPagination(getResponsePagination(managersRes));
+      setDepartments(getResponseData(deptsRes, []));
     } catch (error) {
       addToast('Failed to fetch data', 'error');
     } finally {
@@ -76,7 +93,7 @@ export default function ManagerManagement() {
     try {
       await api.delete(`/users/${id}`);
       addToast('Manager deleted successfully', 'success');
-      fetchManagers();
+      fetchData();
     } catch (error) {
       addToast(error.response?.data?.message || 'Delete failed', 'error');
     }
@@ -88,10 +105,8 @@ export default function ManagerManagement() {
     setFormData({ name: '', email: '', phone: '', password: '', departmentId: '' });
   };
 
-  const filteredManagers = managers.filter(manager =>
-    manager.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    manager.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const totalPages = pagination?.totalPages || 0;
+  const totalItems = pagination?.totalItems || 0;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-6 lg:py-8 animate-fadeIn">
@@ -118,7 +133,7 @@ export default function ManagerManagement() {
           <div className="stats-card bg-gradient-to-br from-cyan-500 to-blue-600 text-white p-3 sm:p-4 rounded-lg overflow-hidden">
             <div className="relative ">
               <p className="text-cyan-100 text-xs font-medium mb-1">Total Managers</p>
-              <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{managers.length}</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{totalItems}</p>
             </div>
             <Shield className="absolute -bottom-1 -right-1 sm:bottom-1 sm:right-1 w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 opacity-20" />
           </div>
@@ -142,13 +157,14 @@ export default function ManagerManagement() {
         <div className="modern-card p-3 sm:p-4 md:p-6 overflow-hidden">
           <div className="flex flex-col gap-2 sm:gap-3 md:gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="modern-input pl-10 text-xs sm:text-sm w-full h-9 sm:h-10"
+                className="modern-input pl-12 text-xs sm:text-sm w-full h-9 sm:h-10"
+                style={{ paddingLeft: '3rem' }}
               />
             </div>
             <button
@@ -170,7 +186,7 @@ export default function ManagerManagement() {
               ))}
             </div>
           </div>
-        ) : filteredManagers.length === 0 ? (
+        ) : managers.length === 0 ? (
           <div className="modern-card p-8 sm:p-12 text-center">
             <UserCog className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -201,7 +217,7 @@ export default function ManagerManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredManagers.map((manager, index) => (
+                  {managers.map((manager, index) => (
                     <tr key={manager.id} className="animate-slideIn" style={{ animationDelay: `${index * 50}ms` }}>
                       <td>
                         <div className="flex items-center gap-3">
@@ -273,7 +289,7 @@ export default function ManagerManagement() {
 
             {/* Mobile Card View */}
             <div className="md:hidden space-y-2 sm:space-y-3 p-3 sm:p-4">
-              {filteredManagers.map((manager) => (
+              {managers.map((manager) => (
                 <div key={manager.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3 overflow-hidden">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -325,6 +341,18 @@ export default function ManagerManagement() {
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="px-3 pb-4 sm:px-4 sm:pb-6">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                pageSize={itemsPerPage}
+                onPageSizeChange={setItemsPerPage}
+              />
+              <p className="text-xs text-muted-foreground text-center mt-4">
+                Showing {managers.length === 0 ? 0 : ((pagination?.page - 1) * pagination?.pageSize) + 1} to {managers.length === 0 ? 0 : ((pagination?.page - 1) * pagination?.pageSize) + managers.length} of {totalItems} managers
+              </p>
             </div>
           </div>
         )}

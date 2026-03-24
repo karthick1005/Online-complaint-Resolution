@@ -49,6 +49,8 @@ const authMiddleware = require('../middleware/authMiddleware');
 const rbacMiddleware = require('../middleware/rbacMiddleware');
 const validationMiddleware = require('../middleware/validationMiddleware');
 const { body } = require('express-validator');
+const { sendSuccess } = require('../utils/apiResponse');
+const { getPagination, buildPaginationMeta } = require('../utils/pagination');
 
 const router = express.Router();
 
@@ -70,13 +72,40 @@ router.use(authMiddleware);
  *           type: string
  *         required: false
  *         description: Filter by department ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           example: 12
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *           example: Potholes
  *     responses:
  *       200:
  *         description: List of categories
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Category'
  */
 router.get('/', async (req, res) => {
   try {
-    const { departmentId } = req.query;
+    const { departmentId, search } = req.query;
+    const { page, pageSize, skip, take } = getPagination(req.query);
 
     const whereCondition = {};
 
@@ -88,16 +117,31 @@ router.get('/', async (req, res) => {
       whereCondition.departmentId = req.user.departmentId;
     }
 
-    const categories = await prisma.category.findMany({
-      where: whereCondition,
-      include: {
-        department: { select: { id: true, name: true } },
-        _count: { select: { complaints: true } }
-      },
-      orderBy: { name: 'asc' }
-    });
+    if (search) {
+      whereCondition.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { department: { name: { contains: search, mode: 'insensitive' } } }
+      ];
+    }
 
-    res.json({ data: categories, total: categories.length });
+    const [categories, totalItems] = await Promise.all([
+      prisma.category.findMany({
+        where: whereCondition,
+        include: {
+          department: { select: { id: true, name: true } },
+          _count: { select: { complaints: true } }
+        },
+        orderBy: { name: 'asc' },
+        skip,
+        take
+      }),
+      prisma.category.count({ where: whereCondition })
+    ]);
+
+    sendSuccess(res, {
+      data: categories,
+      pagination: buildPaginationMeta({ page, pageSize, totalItems })
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -128,9 +172,21 @@ router.get('/', async (req, res) => {
  *                 enum: [Low, Medium, High, Critical]
  *               color:
  *                 type: string
+ *           examples:
+ *             seededStyleCategory:
+ *               $ref: '#/components/examples/CreateCategoryExample'
  *     responses:
  *       201:
  *         description: Category created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Category'
  */
 router.post(
   '/',
@@ -162,7 +218,11 @@ router.post(
         }
       });
 
-      res.status(201).json({ message: 'Created', category });
+      sendSuccess(res, {
+        statusCode: 201,
+        message: 'Category created successfully',
+        data: category,
+      });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -177,6 +237,33 @@ router.post(
  *     tags: [Categories]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               departmentId:
+ *                 type: string
+ *               defaultPriority:
+ *                 type: string
+ *                 enum: [Low, Medium, High, Critical]
+ *               color:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Category updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Category'
  */
 router.put(
   '/:id',
@@ -195,7 +282,10 @@ router.put(
         data: { name, departmentId, defaultPriority, color },
       });
 
-      res.json({ message: 'Updated', category });
+      sendSuccess(res, {
+        message: 'Category updated successfully',
+        data: category,
+      });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -210,6 +300,13 @@ router.put(
  *     tags: [Categories]
  *     security:
  *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Category deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StandardResponse'
  */
 router.delete(
   '/:id',
@@ -220,7 +317,7 @@ router.delete(
 
       await prisma.category.delete({ where: { id } });
 
-      res.json({ message: 'Deleted' });
+      sendSuccess(res, { message: 'Category deleted successfully' });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -235,6 +332,18 @@ router.delete(
  *     tags: [Categories]
  *     security:
  *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Category detail
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Category'
  */
 router.get('/:id', async (req, res) => {
   try {
@@ -244,7 +353,7 @@ router.get('/:id', async (req, res) => {
 
     if (!category) return res.status(404).json({ error: 'Not found' });
 
-    res.json(category);
+    sendSuccess(res, { data: category });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -14,9 +14,19 @@ const router = express.Router();
  *     tags: [Analytics]
  *     security:
  *       - bearerAuth: []
+ *     description: Returns stats in the standardized `success/data` response format. Values vary by authenticated role.
  *     responses:
  *       200:
  *         description: Dashboard statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/DashboardStats'
  */
 router.get(
   '/dashboard/stats',

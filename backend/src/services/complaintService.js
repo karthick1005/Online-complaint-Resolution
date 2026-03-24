@@ -2,6 +2,7 @@ const prisma = require('../config/database');
 const { generateComplaintCode, calculateSLADeadline } = require('../utils/complaintUtils');
 const { sendEmail, emailTemplates } = require('../utils/emailService');
 const notificationService = require('./notificationService');
+const { buildPaginationMeta } = require('../utils/pagination');
 
 const complaintService = {
   async createComplaint(data, userId) {
@@ -81,49 +82,71 @@ const complaintService = {
     if (filters.priority) where.priority = filters.priority;
     if (filters.departmentId) where.departmentId = filters.departmentId;
     if (filters.assignedToId) where.assignedToId = filters.assignedToId;
+    if (filters.search) {
+      where.OR = [
+        {
+          complaintCode: {
+            contains: filters.search,
+            mode: 'insensitive'
+          }
+        },
+        {
+          title: {
+            contains: filters.search,
+            mode: 'insensitive'
+          }
+        }
+      ];
+    }
+
+    const take = Math.min(filters.pageSize || filters.limit || 10, 100);
+    const skip = filters.skip ?? filters.offset ?? 0;
 
     // OPTIMIZATION: Minimal select for list view to reduce payload and improve speed
-    const complaints = await prisma.complaint.findMany({
-      where,
-      select: {
-        id: true,
-        complaintCode: true,
-        userId: true,
-        title: true,
-        description: true,
-        priority: true,
-        status: true,
-        departmentId: true,
-        assignedToId: true,
-        createdAt: true,
-        updatedAt: true,
-        user: {
-          select: { id: true, name: true, email: true }
+    const [complaints, total] = await Promise.all([
+      prisma.complaint.findMany({
+        where,
+        select: {
+          id: true,
+          complaintCode: true,
+          userId: true,
+          title: true,
+          description: true,
+          priority: true,
+          status: true,
+          departmentId: true,
+          assignedToId: true,
+          createdAt: true,
+          updatedAt: true,
+          user: {
+            select: { id: true, name: true, email: true }
+          },
+          department: {
+            select: { id: true, name: true }
+          },
+          assignedTo: {
+            select: { id: true, name: true, email: true }
+          },
+          attachments: {
+            select: { id: true, filePath: true }
+          }
         },
-        department: {
-          select: { id: true, name: true }
-        },
-        assignedTo: {
-          select: { id: true, name: true, email: true }
-        },
-        attachments: {
-          select: { id: true, filePath: true }
-        }
-        // OPTIMIZATION: Don't include full history in list view
-        // OPTIMIZATION: Don't include feedback in list view
-      },
-      orderBy: { createdAt: 'desc' },
-      take: Math.min(filters.limit || 10, 100),  // Cap at 100 to prevent abuse
-      skip: filters.offset || 0
-    });
+        orderBy: { createdAt: 'desc' },
+        take,
+        skip
+      }),
+      prisma.complaint.count({ where })
+    ]);
 
-    const total = await prisma.complaint.count({ where });
+    const page = filters.page || Math.floor(skip / take) + 1;
 
     return {
       data: complaints,
-      total,
-      page: Math.floor((filters.offset || 0) / (filters.limit || 10)) + 1,
-      pageSize: filters.limit || 10
+      pagination: buildPaginationMeta({
+        page,
+        pageSize: take,
+        totalItems: total,
+      })
     };
   },
 

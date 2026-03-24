@@ -1,4 +1,5 @@
 const prisma = require('../config/database');
+const { buildPaginationMeta } = require('../utils/pagination');
 
 const notificationService = {
   async createNotification(data) {
@@ -15,12 +16,38 @@ const notificationService = {
     });
   },
 
-  async getNotifications(userId, limit = 20) {
-    return prisma.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: limit
-    });
+  async getNotifications(userId, options = {}) {
+    const page = Number.parseInt(options.page, 10) > 0 ? Number.parseInt(options.page, 10) : 1;
+    const pageSize = Math.min(
+      Number.parseInt(options.pageSize || options.limit, 10) > 0
+        ? Number.parseInt(options.pageSize || options.limit, 10)
+        : 20,
+      100
+    );
+    const skip = (page - 1) * pageSize;
+    const where = {
+      userId,
+      ...(options.unreadOnly === 'true' ? { isRead: false } : {})
+    };
+
+    const [notifications, totalItems] = await Promise.all([
+      prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize
+      }),
+      prisma.notification.count({ where })
+    ]);
+
+    return {
+      data: notifications,
+      pagination: buildPaginationMeta({
+        page,
+        pageSize,
+        totalItems,
+      })
+    };
   },
 
   async markAsRead(id, userId) {

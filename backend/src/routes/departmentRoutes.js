@@ -44,6 +44,8 @@ const authMiddleware = require('../middleware/authMiddleware');
 const rbacMiddleware = require('../middleware/rbacMiddleware');
 const validationMiddleware = require('../middleware/validationMiddleware');
 const { body } = require('express-validator');
+const { sendSuccess } = require('../utils/apiResponse');
+const { getPagination, buildPaginationMeta } = require('../utils/pagination');
 
 const router = express.Router();
 
@@ -59,35 +61,79 @@ router.use(authMiddleware);
  *     security:
  *       - bearerAuth: []
  *     description: Admin sees all, others see their own department
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           example: 12
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *           example: Infrastructure
  *     responses:
  *       200:
  *         description: List of departments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Department'
  */
 router.get('/', async (req, res) => {
   try {
+    const { search } = req.query;
+    const { page, pageSize, skip, take } = getPagination(req.query);
     const whereCondition =
       req.user.role === 'admin' || !req.user.departmentId
         ? {}
         : { id: req.user.departmentId };
 
-    const departments = await prisma.department.findMany({
-      where: whereCondition,
-      include: {
-        categories: {
-          select: {
-            id: true,
-            name: true,
-            defaultPriority: true
+    if (search) {
+      whereCondition.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    const [departments, totalItems] = await Promise.all([
+      prisma.department.findMany({
+        where: whereCondition,
+        include: {
+          categories: {
+            select: {
+              id: true,
+              name: true,
+              defaultPriority: true
+            }
+          },
+          _count: {
+            select: { complaints: true, users: true }
           }
         },
-        _count: {
-          select: { complaints: true, users: true }
-        }
-      },
-      orderBy: { name: 'asc' }
-    });
+        orderBy: { name: 'asc' },
+        skip,
+        take
+      }),
+      prisma.department.count({ where: whereCondition })
+    ]);
 
-    res.json(departments);
+    sendSuccess(res, {
+      data: departments,
+      pagination: buildPaginationMeta({ page, pageSize, totalItems })
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -114,9 +160,21 @@ router.get('/', async (req, res) => {
  *                 type: string
  *               description:
  *                 type: string
+ *           examples:
+ *             seededStyleDepartment:
+ *               $ref: '#/components/examples/CreateDepartmentExample'
  *     responses:
  *       201:
  *         description: Department created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Department'
  */
 router.post(
   '/',
@@ -139,9 +197,10 @@ router.post(
         }
       });
 
-      res.status(201).json({
+      sendSuccess(res, {
+        statusCode: 201,
         message: 'Department created successfully',
-        department
+        data: department,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -177,6 +236,15 @@ router.post(
  *     responses:
  *       200:
  *         description: Department updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Department'
  */
 router.put(
   '/:id',
@@ -201,9 +269,9 @@ router.put(
         }
       });
 
-      res.json({
+      sendSuccess(res, {
         message: 'Department updated successfully',
-        department
+        data: department,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -227,6 +295,10 @@ router.put(
  *     responses:
  *       200:
  *         description: Department deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StandardResponse'
  *       400:
  *         description: Cannot delete if users/complaints exist
  */
@@ -258,7 +330,7 @@ router.delete(
 
       await prisma.department.delete({ where: { id } });
 
-      res.json({ message: 'Department deleted successfully' });
+      sendSuccess(res, { message: 'Department deleted successfully' });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }

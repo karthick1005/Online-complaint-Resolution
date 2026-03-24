@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { complaintAPI, categoryAPI } from '@/api'
+import { complaintAPI, categoryAPI, getResponseData } from '@/api'
 
 export default function CreateComplaintPage() {
   const navigate = useNavigate()
@@ -33,8 +33,8 @@ export default function CreateComplaintPage() {
     const fetchCategories = async () => {
       try {
         setCategoriesLoading(true)
-        const response = await categoryAPI.getCategories()
-        setCategories(response.data.data || [])
+        const response = await categoryAPI.getCategories({ pageSize: 100 })
+        setCategories(getResponseData(response, []))
       } catch (error) {
         console.error('Failed to fetch categories:', error)
         setCategories([])

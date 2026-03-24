@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { complaintAPI, departmentAPI, categoryAPI } from '../api';
+import { complaintAPI, departmentAPI, categoryAPI, getResponseData } from '../api';
 import { getDepartmentList, getCategories, getDepartmentDescription } from '../lib/departments';
 
 const ComplaintForm = () => {
@@ -29,8 +29,9 @@ const ComplaintForm = () => {
         const deptList = getDepartmentList();
         const result = await departmentAPI.getDepartments().catch(() => null);
         
-        if (result?.data) {
-          setDepartments(result.data);
+        const departmentData = getResponseData(result, null);
+        if (departmentData) {
+          setDepartments(departmentData);
         } else {
           // Fallback to local departments data
           setDepartments(deptList.map((name, idx) => ({
@@ -59,8 +60,9 @@ const ComplaintForm = () => {
       // Try to fetch categories from API
       const result = await categoryAPI.getCategoriesByDepartment(deptId).catch(() => null);
       
-      if (result?.data?.data) {
-        setCategories(result.data.data);
+      const categoryData = getResponseData(result, []);
+      if (categoryData.length > 0) {
+        setCategories(categoryData);
       } else {
         // Fallback to local categories data
         const localCategories = getCategories(dept.name);

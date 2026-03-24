@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { complaintAPI } from '../api';
+import { complaintAPI, getResponseData } from '../api';
 import { useAuth } from '../context/AuthContext';
 
 const ComplaintDetail = () => {
@@ -20,8 +20,9 @@ const ComplaintDetail = () => {
   const fetchComplaint = async () => {
     try {
       const response = await complaintAPI.getComplaintById(id);
-      setComplaint(response.data);
-      setNewStatus(response.data.status);
+      const complaintData = getResponseData(response, null);
+      setComplaint(complaintData);
+      setNewStatus(complaintData?.status || '');
     } catch (error) {
       console.error('Error fetching complaint:', error);
     } finally {

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { complaintAPI } from '@/api';
+import { complaintAPI, getResponseData } from '@/api';
 import { queryKeys } from '@/services/api/queryClient';
 
 /**
@@ -26,7 +26,7 @@ export const useComplaint = (complaintId, options = {}) => {
     queryKey: queryKeys.complaints.detail(complaintId),
     queryFn: async () => {
       const response = await complaintAPI.getComplaintById(complaintId);
-      return response.data;
+      return getResponseData(response, null);
     },
     // Don't fetch if no ID provided
     enabled: !!complaintId,
@@ -55,7 +55,7 @@ export const useComplaintAttachments = (complaintId) => {
     queryKey: ['complaints', 'attachments', complaintId],
     queryFn: async () => {
       const response = await complaintAPI.getAttachments(complaintId);
-      return response.data;
+      return getResponseData(response, []);
     },
     enabled: !!complaintId,
     staleTime: 10 * 60 * 1000, // Attachments rarely change - 10 min
@@ -70,7 +70,7 @@ export const useComplaintComments = (complaintId) => {
     queryKey: ['complaints', 'comments', complaintId],
     queryFn: async () => {
       const response = await complaintAPI.getComments(complaintId);
-      return response.data;
+      return getResponseData(response, []);
     },
     enabled: !!complaintId,
     staleTime: 1 * 60 * 1000, // Comments update frequently - 1 min

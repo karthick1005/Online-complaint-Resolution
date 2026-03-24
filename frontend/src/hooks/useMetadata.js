@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { complaintAPI, departmentAPI, categoryAPI } from '@/api';
+import { complaintAPI, departmentAPI, categoryAPI, getResponseData } from '@/api';
 import { queryKeys } from '@/services/api/queryClient';
 
 /**
@@ -9,8 +9,8 @@ export const useStaff = (options = {}) => {
   return useQuery({
     queryKey: queryKeys.complaints.staff,
     queryFn: async () => {
-      const response = await complaintAPI.getStaff();
-      return response.data.data || [];
+      const response = await complaintAPI.getStaff({ limit: 100 });
+      return getResponseData(response, []);
     },
     // Staff list doesn't change frequently
     staleTime: 10 * 60 * 1000,
@@ -26,8 +26,8 @@ export const useDepartments = (options = {}) => {
   return useQuery({
     queryKey: queryKeys.departments.list,
     queryFn: async () => {
-      const response = await departmentAPI.getDepartments();
-      return response.data || [];
+      const response = await departmentAPI.getDepartments({ pageSize: 100 });
+      return getResponseData(response, []);
     },
     // Departments rarely change - cache aggressively
     staleTime: 30 * 60 * 1000,
@@ -43,8 +43,8 @@ export const useCategories = (options = {}) => {
   return useQuery({
     queryKey: queryKeys.complaints.categories,
     queryFn: async () => {
-      const response = await categoryAPI.getCategories();
-      return response.data.data || [];
+      const response = await categoryAPI.getCategories({ pageSize: 100 });
+      return getResponseData(response, []);
     },
     // Categories rarely change
     staleTime: 30 * 60 * 1000,

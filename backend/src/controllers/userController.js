@@ -1,4 +1,5 @@
 const userService = require('../services/userService');
+const { sendSuccess } = require('../utils/apiResponse');
 
 const userController = {
   // Create new user (admin only)
@@ -22,9 +23,10 @@ const userController = {
         departmentId
       });
 
-      res.status(201).json({
+      sendSuccess(res, {
+        statusCode: 201,
         message: 'User created successfully',
-        user
+        data: user,
       });
     } catch (error) {
       if (error.message.includes('already exists')) {
@@ -39,10 +41,7 @@ const userController = {
     try {
       console.log('Current user:', req.user);
       const users = await userService.getAllUsers(req.query, req.user);
-      res.json({
-        data: users,
-        total: users.length
-      });
+      sendSuccess(res, users);
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -53,7 +52,7 @@ const userController = {
     try {
       const { id } = req.params;
       const user = await userService.getUserById(id, req.user);
-      res.json(user);
+      sendSuccess(res, { data: user });
     } catch (error) {
       if (error.message.includes('Unauthorized')) {
         return res.status(403).json({ error: error.message });
@@ -82,9 +81,9 @@ const userController = {
 
       const user = await userService.updateUser(id, updateData, req.user);
 
-      res.json({
+      sendSuccess(res, {
         message: 'User updated successfully',
-        user
+        data: user,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -96,7 +95,7 @@ const userController = {
     try {
       const { id } = req.params;
       await userService.deleteUser(id, req.user.id);
-      res.json({ message: 'User deleted successfully' });
+      sendSuccess(res, { message: 'User deleted successfully' });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -114,7 +113,7 @@ const userController = {
 
       await userService.changePassword(userId, currentPassword, newPassword);
 
-      res.json({ message: 'Password changed successfully' });
+      sendSuccess(res, { message: 'Password changed successfully' });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -124,7 +123,7 @@ const userController = {
   async getDepartments(req, res) {
     try {
       const departments = await userService.getDepartments();
-      res.json({ data: departments });
+      sendSuccess(res, { data: departments });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -136,9 +135,9 @@ const userController = {
       const { id } = req.params;
       const updatedUser = await userService.toggleUserStatus(id, req.user.id);
 
-      res.json({
+      sendSuccess(res, {
         message: `User ${updatedUser.isActive ? 'activated' : 'deactivated'} successfully`,
-        user: updatedUser
+        data: updatedUser,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });

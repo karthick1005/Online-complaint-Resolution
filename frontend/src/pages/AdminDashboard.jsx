@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { AlertCircle, TrendingUp, BarChart3, Users, CheckCircle, Clock } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { analyticsAPI, complaintAPI, departmentAPI } from '@/api'
+import { analyticsAPI, complaintAPI, departmentAPI, getResponseData } from '@/api'
 import { getDepartmentList } from '@/lib/departments'
 
 export default function AdminDashboard() {
@@ -18,8 +18,9 @@ export default function AdminDashboard() {
         
         // Fetch departments
         const deptResult = await departmentAPI.getDepartments().catch(() => null);
-        if (deptResult?.data) {
-          setDepartments(deptResult.data);
+        const departmentData = getResponseData(deptResult, null);
+        if (departmentData) {
+          setDepartments(departmentData);
         } else {
           const deptList = getDepartmentList();
           setDepartments(deptList.map((name, idx) => ({ id: `dept-${idx}`, name })));
@@ -27,11 +28,11 @@ export default function AdminDashboard() {
 
         // Fetch all complaints
         const complaintsRes = await complaintAPI.getComplaints({ limit: 100 })
-        setComplaints(complaintsRes.data.data || [])
+        setComplaints(getResponseData(complaintsRes, []))
 
         // Fetch stats
         const statsRes = await analyticsAPI.getDashboardStats()
-        setStats(statsRes.data)
+        setStats(getResponseData(statsRes, null))
       } catch (error) {
         console.error('Error fetching data:', error)
       } finally {

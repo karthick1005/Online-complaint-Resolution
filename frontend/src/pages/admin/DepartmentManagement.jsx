@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useDeferredValue, useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Building2, Users, Search, Filter } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
-import api from '@/api';
+import api, { getResponseData, getResponsePagination } from '@/api';
+import { Pagination } from '@/components/ui/Pagination';
 
 export default function DepartmentManagement() {
   const [departments, setDepartments] = useState([]);
@@ -9,21 +10,36 @@ export default function DepartmentManagement() {
   const [showModal, setShowModal] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [pagination, setPagination] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     description: ''
   });
   const { addToast } = useToast();
+  const deferredSearchTerm = useDeferredValue(searchTerm);
 
   useEffect(() => {
     fetchDepartments();
-  }, []);
+  }, [currentPage, itemsPerPage, deferredSearchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, itemsPerPage]);
 
   const fetchDepartments = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/departments');
-      setDepartments(response.data || []);
+      const response = await api.get('/departments', {
+        params: {
+          page: currentPage,
+          pageSize: itemsPerPage,
+          search: deferredSearchTerm.trim() || undefined,
+        }
+      });
+      setDepartments(getResponseData(response, []));
+      setPagination(getResponsePagination(response));
     } catch (error) {
       addToast('Failed to fetch departments', 'error');
     } finally {
@@ -75,10 +91,8 @@ export default function DepartmentManagement() {
     setFormData({ name: '', description: '', email: '', phone: '' });
   };
 
-  const filteredDepartments = departments.filter(dept =>
-    dept.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    dept.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const totalPages = pagination?.totalPages || 0;
+  const totalItems = pagination?.totalItems || 0;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 animate-fadeIn">
@@ -104,13 +118,14 @@ export default function DepartmentManagement() {
         <div className="modern-card p-6 mb-6">
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search departments..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="modern-input pl-10"
+                className="modern-input pl-12"
+                style={{ paddingLeft: '3rem' }}
               />
             </div>
             <button
@@ -134,7 +149,7 @@ export default function DepartmentManagement() {
               </div>
             ))}
           </div>
-        ) : filteredDepartments.length === 0 ? (
+        ) : departments.length === 0 ? (
           <div className="modern-card p-12 text-center">
             <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -151,55 +166,70 @@ export default function DepartmentManagement() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDepartments.map((department, index) => (
-              <div
-                key={department.id}
-                className="modern-card-hover p-6 group"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-lg">
-                      <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {department.name}
-                      </h3>
-                      {department._count?.users > 0 && (
-                        <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          <Users className="w-4 h-4" />
-                          <span>{department._count.users} members</span>
-                        </div>
-                      )}
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {departments.map((department, index) => (
+                <div
+                  key={department.id}
+                  className="modern-card-hover p-6 group"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-lg">
+                        <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          {department.name}
+                        </h3>
+                        {department._count?.users > 0 && (
+                          <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            <Users className="w-4 h-4" />
+                            <span>{department._count.users} members</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
-                  {department.description || 'No description provided'}
-                </p>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
+                    {department.description || 'No description provided'}
+                  </p>
 
-                <div className="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <button
-                    onClick={() => handleEdit(department)}
-                    className="btn btn-ghost btn-sm flex-1"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(department.id)}
-                    className="btn btn-ghost btn-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
+                  <div className="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <button
+                      onClick={() => handleEdit(department)}
+                      className="btn btn-ghost btn-sm flex-1"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(department.id)}
+                      className="btn btn-ghost btn-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            <div className="mt-8">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                pageSize={itemsPerPage}
+                onPageSizeChange={setItemsPerPage}
+              />
+              <p className="text-xs text-muted-foreground text-center mt-4">
+                Showing {departments.length === 0 ? 0 : ((pagination?.page - 1) * pagination?.pageSize) + 1} to {departments.length === 0 ? 0 : ((pagination?.page - 1) * pagination?.pageSize) + departments.length} of {totalItems} departments
+              </p>
+            </div>
+          </>
         )}
       </div>
 

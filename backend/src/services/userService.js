@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
 const bcrypt = require('bcrypt');
+const { buildPaginationMeta } = require('../utils/pagination');
 
 const userService = {
   // Create new user
@@ -49,6 +50,14 @@ const userService = {
   // Get all users with filtering
 async getAllUsers(query = {}, currentUser) {
   const { search, role, status } = query;
+  const page = Number.parseInt(query.page, 10) > 0 ? Number.parseInt(query.page, 10) : 1;
+  const pageSize = Math.min(
+    Number.parseInt(query.pageSize || query.limit, 10) > 0
+      ? Number.parseInt(query.pageSize || query.limit, 10)
+      : 10,
+    100
+  );
+  const skip = (page - 1) * pageSize;
 
   const filters = {};
 
@@ -83,24 +92,39 @@ async getAllUsers(query = {}, currentUser) {
 
   console.log('Fetching users with filters:', filters);
 
-  const users = await prisma.user.findMany({
-    where: filters,
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      role: true,
-      isActive: true,
-      createdAt: true,
-      department: {
-        select: { name: true }
-      }
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+  const [users, totalItems] = await Promise.all([
+    prisma.user.findMany({
+      where: filters,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        departmentId: true,
+        isActive: true,
+        createdAt: true,
+        department: {
+          select: { id: true, name: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: pageSize
+    }),
+    prisma.user.count({
+      where: filters
+    })
+  ]);
 
-  return users;
+  return {
+    data: users,
+    pagination: buildPaginationMeta({
+      page,
+      pageSize,
+      totalItems,
+    })
+  };
 },
 
   // Get single user by ID

@@ -28,6 +28,7 @@ const express = require('express');
 const router = express.Router();
 const authenticate = require('../middleware/authMiddleware');
 const notificationService = require('../services/notificationService');
+const { sendSuccess } = require('../utils/apiResponse');
 
 /**
  * @swagger
@@ -38,20 +39,74 @@ const notificationService = require('../services/notificationService');
  *     security:
  *       - bearerAuth: []
  *     description: Returns all notifications for logged-in user
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           example: 10
  *     responses:
  *       200:
  *         description: List of notifications
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Notification'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/PaginatedResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Notification'
  */
 router.get('/', authenticate, async (req, res) => {
   try {
-    const notifications = await notificationService.getNotifications(req.user.id);
-    res.json(notifications);
+    const notifications = await notificationService.getNotifications(req.user.id, req.query);
+    sendSuccess(res, notifications);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /notifications/unread-count:
+ *   get:
+ *     summary: Get unread notification count
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Unread count returned in the standard response envelope
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         unreadCount:
+ *                           type: integer
+ *                           example: 4
+ */
+router.get('/unread-count', authenticate, async (req, res) => {
+  try {
+    const result = await notificationService.getNotifications(req.user.id, {
+      unreadOnly: 'true',
+      page: 1,
+      pageSize: 1,
+    });
+    sendSuccess(res, { data: { unreadCount: result.pagination.totalItems } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -76,13 +131,17 @@ router.get('/', authenticate, async (req, res) => {
  *     responses:
  *       200:
  *         description: Notification marked as read
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StandardResponse'
  *       404:
  *         description: Notification not found
  */
 router.patch('/:id/read', authenticate, async (req, res) => {
   try {
     await notificationService.markAsRead(req.params.id, req.user.id);
-    res.json({ success: true });
+    sendSuccess(res, { message: 'Notification marked as read' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -100,11 +159,15 @@ router.patch('/:id/read', authenticate, async (req, res) => {
  *     responses:
  *       200:
  *         description: All notifications marked as read
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StandardResponse'
  */
 router.patch('/read-all', authenticate, async (req, res) => {
   try {
     await notificationService.markAllAsRead(req.user.id);
-    res.json({ success: true });
+    sendSuccess(res, { message: 'All notifications marked as read' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

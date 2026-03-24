@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Users, Mail, Phone, Search, Shield, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/api';
+import api, { getResponseData } from '@/api';
 
 export default function StaffManagement() {
   const { user } = useAuth();
@@ -27,8 +27,14 @@ export default function StaffManagement() {
     try {
       setLoading(true);
       // Fetch staff from manager's department
-      const response = await api.get(`/users?role=staff&departmentId=${user.departmentId}`);
-      setStaff(response.data.data || []);
+      const response = await api.get('/users', {
+        params: {
+          role: 'staff',
+          departmentId: user.departmentId,
+          pageSize: 100,
+        }
+      });
+      setStaff(getResponseData(response, []));
     } catch (error) {
       addToast('Failed to fetch staff', 'error');
     } finally {
@@ -158,13 +164,14 @@ export default function StaffManagement() {
         <div className="modern-card p-6 mb-6">
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search staff members..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="modern-input pl-10"
+                className="modern-input pl-12"
+                style={{ paddingLeft: '3rem' }}
               />
             </div>
             <button

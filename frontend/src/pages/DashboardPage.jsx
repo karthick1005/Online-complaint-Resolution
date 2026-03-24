@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { TrendingUp, AlertCircle, CheckCircle, Clock, BarChart3 } from 'lucide-react'
-import { analyticsAPI } from '@/api'
+import { analyticsAPI, getResponseData } from '@/api'
 import { useAuth } from '@/context/AuthContext'
 
 export default function DashboardPage() {
@@ -14,7 +14,7 @@ export default function DashboardPage() {
     const fetchStats = async () => {
       try {
         const response = await analyticsAPI.getDashboardStats()
-        setStats(response.data)
+        setStats(getResponseData(response, null))
       } catch (error) {
         console.error('Failed to fetch stats:', error)
       } finally {

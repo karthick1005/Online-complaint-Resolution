@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/DropdownMenu'
 import { Button } from '@/components/ui/Button'
-import { notificationAPI } from '@/api'
+import { getResponseData, notificationAPI } from '@/api'
 import { useAuth } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -38,8 +38,8 @@ export function NotificationDropdown() {
   const fetchNotifications = async () => {
     try {
       setLoading(true)
-      const { data } = await notificationAPI.getNotifications?.({ limit: 10 }).catch(() => ({ data: [] }))
-      const notifs = Array.isArray(data) ? data : data?.data || []
+      const response = await notificationAPI.getNotifications?.({ page: 1, pageSize: 10 }).catch(() => null)
+      const notifs = getResponseData(response, [])
       setNotifications(notifs)
       setUnreadCount(notifs.filter(n => !n.isRead)?.length || 0)
     } catch (err) {

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/Badge"
 import { Input } from "@/components/ui/Input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table"
-import { userAPI } from "@/api"
+import { getResponseData, userAPI } from "@/api"
 import { useAuth } from "@/context/AuthContext"
 
 export default function StaffDashboard() {
@@ -25,7 +25,7 @@ export default function StaffDashboard() {
         if (filterRole !== "all") params.role = filterRole
 
         const response = await userAPI.getAllUsers(params)
-        setStaffs(response.data.data || [])
+        setStaffs(getResponseData(response, []))
       } catch (error) {
         console.error("Error fetching staffs:", error)
       } finally {

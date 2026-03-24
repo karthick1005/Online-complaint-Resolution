@@ -27,7 +27,7 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
-import { complaintAPI } from "@/api";
+import { complaintAPI, getResponseData } from "@/api";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { FeedbackForm } from "@/components/FeedbackForm";
@@ -95,7 +95,7 @@ export default function ComplaintDetailPage() {
       try {
         setLoading(true);
         const response = await complaintAPI.getComplaintById(id);
-        setComplaint(response.data);
+        setComplaint(getResponseData(response, null));
       } catch (error) {
         console.error("Failed to fetch complaint:", error);
       } finally {
@@ -158,7 +158,7 @@ export default function ComplaintDetailPage() {
         setStaffLoading(true);
         console.log("Fetching staff for department:", complaint.departmentId);
         const response = await complaintAPI.getStaff({ departmentId: complaint?.departmentId || "" });
-        setStaffList(response.data?.data || []);
+        setStaffList(getResponseData(response, []));
       } catch (error) {
         console.error("Failed to fetch staff:", error);
       } finally {
@@ -174,7 +174,7 @@ export default function ComplaintDetailPage() {
       try {
         setAttachmentsLoading(true);
         const response = await complaintAPI.getAttachments(id);
-        const attachmentsData = response.data?.data || [];
+        const attachmentsData = getResponseData(response, []);
         console.log("Fetched attachments:", attachmentsData);
         setAttachments(attachmentsData);
 
@@ -215,7 +215,7 @@ export default function ComplaintDetailPage() {
       try {
         setCommentsLoading(true);
         const response = await complaintAPI.getComments(id);
-        setComments(response.data?.data || []);
+        setComments(getResponseData(response, []));
       } catch (error) {
         console.error("Failed to fetch comments:", error);
       } finally {
@@ -240,7 +240,7 @@ export default function ComplaintDetailPage() {
       setSelectedStaff("");
       // Refresh complaint to show updated assignment
       const response = await complaintAPI.getComplaintById(id);
-      setComplaint(response.data);
+      setComplaint(getResponseData(response, null));
       setTimeout(() => setAssignmentSuccess(false), 3000);
     } catch (error) {
       setAssignmentError(
@@ -269,7 +269,7 @@ export default function ComplaintDetailPage() {
       setStatusFilePreview({});
       // Refresh complaint
       const response = await complaintAPI.getComplaintById(id);
-      setComplaint(response.data);
+      setComplaint(getResponseData(response, null));
       setTimeout(() => setStatusSuccess(false), 3000);
     } catch (error) {
       setStatusError(error.response?.data?.error || "Failed to update status");
@@ -352,7 +352,7 @@ export default function ComplaintDetailPage() {
       setShowReopenDialog(false);
       // Reload complaint data
       const response = await complaintAPI.getComplaintById(id);
-      setComplaint(response.data);
+      setComplaint(getResponseData(response, null));
       setTimeout(() => setReopenSuccess(false), 3000);
     } catch (error) {
       setReopenError(
@@ -390,7 +390,7 @@ export default function ComplaintDetailPage() {
       setNewComment("");
       // Refresh comments
       const response = await complaintAPI.getComments(id);
-      setComments(response.data?.data || []);
+      setComments(getResponseData(response, []));
       setTimeout(() => setCommentSuccess(false), 3000);
     } catch (error) {
       setCommentError(error.response?.data?.error || "Failed to add comment");
@@ -413,7 +413,7 @@ export default function ComplaintDetailPage() {
       setEscalationReason("");
       // Refresh complaint
       const response = await complaintAPI.getComplaintById(id);
-      setComplaint(response.data);
+      setComplaint(getResponseData(response, null));
     } catch (error) {
       setEscalationError(
         error.response?.data?.error || "Failed to escalate complaint",

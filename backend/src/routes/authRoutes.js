@@ -12,12 +12,14 @@ const router = express.Router();
  *   post:
  *     summary: Register a new user
  *     tags: [Auth]
+ *     description: Creates a complainant account. Example payload mirrors the seeded password format.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [name, email, password, confirmPassword]
  *             properties:
  *               name:
  *                 type: string
@@ -29,9 +31,21 @@ const router = express.Router();
  *                 type: string
  *               confirmPassword:
  *                 type: string
+ *           examples:
+ *             seededStyleRegistration:
+ *               $ref: '#/components/examples/RegisterComplainantExample'
  *     responses:
  *       201:
  *         description: User registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/AuthUser'
  */
 router.post(
   '/register',
@@ -53,20 +67,41 @@ router.post(
  *   post:
  *     summary: Login a user
  *     tags: [Auth]
+ *     description: Use one of the seeded accounts to authenticate directly from Swagger.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [email, password]
  *             properties:
  *               email:
  *                 type: string
  *               password:
  *                 type: string
+ *           examples:
+ *             admin:
+ *               $ref: '#/components/examples/LoginSeedAdmin'
+ *             manager:
+ *               $ref: '#/components/examples/LoginSeedManager'
  *     responses:
  *       200:
  *         description: User logged in
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         token:
+ *                           type: string
+ *                         user:
+ *                           $ref: '#/components/schemas/AuthUser'
  */
 router.post(
   '/login',
@@ -90,6 +125,20 @@ router.post(
  *     responses:
  *       200:
  *         description: Current user info
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/StandardResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       allOf:
+ *                         - $ref: '#/components/schemas/AuthUser'
+ *                         - type: object
+ *                           properties:
+ *                             department:
+ *                               $ref: '#/components/schemas/DepartmentSummary'
  */
 const authMiddleware = require('../middleware/authMiddleware');
 router.get('/me', authMiddleware, authController.getMe);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useDeferredValue, useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Search, UserCheck, UserX, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useToast } from '@/context/ToastContext'
 import { useAuth } from '@/context/AuthContext'
 import { Pagination } from '@/components/ui/Pagination'
-import { userAPI } from '@/api'
+import { getResponseData, getResponsePagination, userAPI } from '@/api'
 
 export default function UsersPage() {
   // ========== State Management ==========
@@ -32,6 +32,8 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [pagination, setPagination] = useState(null)
   
   // Dialog states
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -51,26 +53,30 @@ export default function UsersPage() {
   
   const { addToast } = useToast()
   const { user: currentUser } = useAuth()
-  const itemsPerPage = 10
+  const deferredSearchTerm = useDeferredValue(searchTerm)
 
   // ========== Effects ==========
   useEffect(() => {
     fetchUsers()
     fetchDepartments()
-  }, [roleFilter])
+  }, [roleFilter, currentPage, deferredSearchTerm])
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, roleFilter])
+  }, [searchTerm, roleFilter, itemsPerPage])
 
   // ========== Data Fetching ==========
   const fetchUsers = async () => {
     try {
       setLoading(true)
       const response = await userAPI.getAllUsers({
+        page: currentPage,
+        pageSize: itemsPerPage,
+        search: deferredSearchTerm.trim() || undefined,
         role: roleFilter !== 'all' ? roleFilter : undefined
       })
-      setUsers(response.data.data || [])
+      setUsers(getResponseData(response, []))
+      setPagination(getResponsePagination(response))
     } catch (error) {
       console.error('Failed to fetch users:', error)
       addToast('Failed to load users', 'error')
@@ -82,7 +88,7 @@ export default function UsersPage() {
   const fetchDepartments = async () => {
     try {
       const response = await userAPI.getDepartments()
-      setDepartments(response.data?.data || [])
+      setDepartments(getResponseData(response, []))
     } catch (error) {
       console.error('Failed to fetch departments:', error)
     }
@@ -220,16 +226,13 @@ export default function UsersPage() {
       let response
       if (editingUser) {
         response = await userAPI.updateUser(editingUser.id, userData)
-        setUsers(prev => prev.map(u => 
-          u.id === editingUser.id ? response.data.user : u
-        ))
-        addToast('User updated successfully', 'success')
+        addToast(response.data?.message || 'User updated successfully', 'success')
       } else {
         response = await userAPI.createUser(userData)
-        setUsers(prev => [response.data.user, ...prev])
-        addToast('User created successfully', 'success')
+        addToast(response.data?.message || 'User created successfully', 'success')
       }
 
+      await fetchUsers()
       handleCloseDialog()
     } catch (error) {
       console.error('Failed to save user:', error)
@@ -251,11 +254,10 @@ export default function UsersPage() {
 
     try {
       const response = await userAPI.toggleUserStatus(user.id)
-      setUsers(prev => prev.map(u => 
-        u.id === user.id ? { ...u, isActive: response.data.user.isActive } : u
-      ))
+      await fetchUsers()
+      const updatedUser = getResponseData(response, null)
       addToast(
-        `User ${response.data.user.isActive ? 'activated' : 'deactivated'} successfully`,
+        `User ${updatedUser?.isActive ? 'activated' : 'deactivated'} successfully`,
         'success'
       )
     } catch (error) {
@@ -278,7 +280,7 @@ export default function UsersPage() {
 
     try {
       await userAPI.deleteUser(user.id)
-      setUsers(prev => prev.filter(u => u.id !== user.id))
+      await fetchUsers()
       addToast('User deleted successfully', 'success')
     } catch (error) {
       console.error('Failed to delete user:', error)
@@ -287,22 +289,7 @@ export default function UsersPage() {
   }
 
   // ========== Filtering & Pagination ==========
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.phone && user.phone.includes(searchTerm))
-    
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter
-    
-    return matchesSearch && matchesRole
-  })
-
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
+  const totalPages = pagination?.totalPages || 0
 
   // ========== Utility Functions ==========
   const getRoleColor = (role) => {
@@ -570,12 +557,13 @@ export default function UsersPage() {
         <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6 pb-4 sm:pb-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="relative col-span-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder="Search by name, email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 text-xs sm:text-sm h-9 sm:h-10"
+                className="pl-12 text-xs sm:text-sm h-9 sm:h-10"
+                style={{ paddingLeft: '3rem' }}
               />
             </div>
             <select
@@ -599,16 +587,13 @@ export default function UsersPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex-1">
               <CardTitle className="text-lg sm:text-2xl font-bold">
-                {filteredUsers.length > 0 
-                  ? `Users (${filteredUsers.length})`
+                {(pagination?.totalItems || 0) > 0 
+                  ? `Users (${pagination.totalItems})`
                   : 'Users'
                 }
               </CardTitle>
               <CardDescription className="text-xs sm:text-sm mt-1">
-                {filteredUsers.length === users.length 
-                  ? `Showing all ${users.length} ${users.length === 1 ? 'user' : 'users'}`
-                  : `${filteredUsers.length} of ${users.length} ${users.length === 1 ? 'user' : 'users'}`
-                }
+                Showing page {pagination?.page || 1} of {pagination?.totalPages || 0}
               </CardDescription>
             </div>
             <Button onClick={handleOpenAddDialog} className="gap-2 hidden md:flex h-10">
@@ -623,7 +608,7 @@ export default function UsersPage() {
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
               <p className="text-sm text-muted-foreground">Loading users...</p>
             </div>
-          ) : paginatedUsers.length > 0 ? (
+          ) : users.length > 0 ? (
             <>
               {/* Desktop Table */}
               <div className="hidden md:block overflow-x-auto -mx-4 sm:-mx-6">
@@ -641,7 +626,7 @@ export default function UsersPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paginatedUsers.map(renderUserRow)}
+                      {users.map(renderUserRow)}
                     </TableBody>
                   </Table>
                 </div>
@@ -649,7 +634,7 @@ export default function UsersPage() {
 
               {/* Mobile Cards */}
               <div className="md:hidden space-y-3 px-0">
-                {paginatedUsers.map((user) => (
+                {users.map((user) => (
                   <div key={user.id} className="border border-border rounded-xl p-4 space-y-3 overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow">
                     {/* Top Section: Avatar-like Header */}
                     <div className="flex items-start justify-between gap-3">
@@ -742,17 +727,17 @@ export default function UsersPage() {
                 ))}
               </div>
 
-              {totalPages > 1 && (
-                <div className="mt-6 sm:mt-8 flex justify-center">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                  />
-                </div>
-              )}
+              <div className="mt-6 sm:mt-8">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  pageSize={itemsPerPage}
+                  onPageSizeChange={setItemsPerPage}
+                />
+              </div>
               <p className="text-xs text-muted-foreground text-center mt-4">
-                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredUsers.length)} of {filteredUsers.length} users
+                Showing {users.length === 0 ? 0 : ((pagination?.page - 1) * pagination?.pageSize) + 1} to {users.length === 0 ? 0 : ((pagination?.page - 1) * pagination?.pageSize) + users.length} of {pagination?.totalItems || 0} users
               </p>
             </>
           ) : (

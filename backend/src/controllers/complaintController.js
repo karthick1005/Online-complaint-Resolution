@@ -4,6 +4,8 @@ const { getLocationInfo } = require('../utils/geoLocation');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { sendSuccess } = require('../utils/apiResponse');
+const { getPagination } = require('../utils/pagination');
 
 // Multer configuration
 const storage = multer.diskStorage({
@@ -79,14 +81,17 @@ const complaintController = {
         }
       }
 
-      res.status(201).json({
+      sendSuccess(res, {
+        statusCode: 201,
         message: 'Complaint created successfully',
-        complaint,
-        locationDetected: locationInfo.source,
-        locationInfo: {
+        data: {
+          complaint,
+          locationDetected: locationInfo.source,
+          locationInfo: {
           source: locationInfo.source,
           latitude: locationInfo.latitude,
           longitude: locationInfo.longitude
+        }
         }
       });
     } catch (error) {
@@ -96,8 +101,12 @@ const complaintController = {
 
   async getComplaints(req, res) {
     try {
-      const { status, priority, departmentId, limit = 10, offset = 0 } = req.query;
-      const filters = { limit: parseInt(limit), offset: parseInt(offset) };
+      const { status, priority, departmentId, search } = req.query;
+      const pagination = getPagination(req.query);
+      const filters = {
+        ...pagination,
+        search,
+      };
 
       // RBAC: Filter complaints based on user role
       switch (req.user.role) {
@@ -129,7 +138,7 @@ const complaintController = {
       }
 
       const result = await complaintService.getComplaints(filters)
-      res.json(result)
+      sendSuccess(res, result)
     } catch (error) {
       res.status(500).json({ error: error.message })
     }
@@ -164,7 +173,7 @@ const complaintController = {
         return res.status(403).json({ error: 'Access denied' });
       }
 
-      res.json(complaint);
+      sendSuccess(res, { data: complaint });
     } catch (error) {
       res.status(404).json({ error: error.message });
     }
@@ -192,9 +201,9 @@ const complaintController = {
         req.user
       );
 
-      res.json({
+      sendSuccess(res, {
         message: 'Complaint status updated',
-        complaint
+        data: complaint,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -211,9 +220,9 @@ const complaintController = {
         req.user
       );
 
-      res.json({
+      sendSuccess(res, {
         message: 'Complaint assigned successfully',
-        complaint
+        data: complaint,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -235,9 +244,10 @@ const complaintController = {
         comment
       );
 
-      res.status(201).json({
+      sendSuccess(res, {
+        statusCode: 201,
         message: 'Feedback added successfully',
-        feedback
+        data: feedback,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -279,9 +289,9 @@ const complaintController = {
         }
       });
 
-      res.json({
+      sendSuccess(res, {
         message: 'Staff fetched successfully',
-        data: staff
+        data: staff,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -304,9 +314,9 @@ const complaintController = {
         }
       });
 
-      res.json({
+      sendSuccess(res, {
         message: 'Categories fetched successfully',
-        data: categories
+        data: categories,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -332,9 +342,9 @@ const complaintController = {
         }
       });
 
-      res.json({
+      sendSuccess(res, {
         message: 'Attachments fetched successfully',
-        data: attachments
+        data: attachments,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -430,9 +440,9 @@ const complaintController = {
         }
       });
 
-      res.json({
+      sendSuccess(res, {
         message: 'Comment added successfully',
-        data: newComment
+        data: newComment,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -467,9 +477,9 @@ const complaintController = {
         }
       });
 
-      res.json({
+      sendSuccess(res, {
         message: 'Comments fetched successfully',
-        data: comments
+        data: comments,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -522,9 +532,9 @@ const complaintController = {
         }
       });
 
-      res.json({
+      sendSuccess(res, {
         message: 'Complaint escalated successfully',
-        complaint: updatedComplaint
+        data: updatedComplaint,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -541,9 +551,9 @@ const complaintController = {
         reason
       );
 
-      res.json({
+      sendSuccess(res, {
         message: 'Complaint reopened successfully',
-        complaint
+        data: complaint,
       });
     } catch (error) {
       res.status(400).json({ error: error.message });

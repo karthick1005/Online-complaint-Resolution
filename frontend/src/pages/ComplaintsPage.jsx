@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useDeferredValue, useState, useEffect } from 'react'
 import { Plus, Search, Filter, MoreHorizontal, AlertCircle, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
-import { complaintAPI, departmentAPI } from '@/api'
+import { complaintAPI, departmentAPI, getResponseData, getResponsePagination } from '@/api'
 import { Pagination } from '@/components/ui/Pagination'
 import { getDepartmentList } from '@/lib/departments'
 
@@ -28,19 +28,21 @@ export default function ComplaintsPage() {
   const [filterPriority, setFilterPriority] = useState('all')
   const [filterDepartment, setFilterDepartment] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
-  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [pagination, setPagination] = useState(null)
   const { user } = useAuth()
   const { addToast } = useToast()
   const navigate = useNavigate()
-  const itemsPerPage = 10
+  const deferredSearchTerm = useDeferredValue(searchTerm)
 
   // Fetch departments on component mount
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
         const result = await departmentAPI.getDepartments().catch(() => null);
-        if (result?.data) {
-          setDepartments(result.data);
+        const departmentData = getResponseData(result, null);
+        if (departmentData) {
+          setDepartments(departmentData);
         } else {
           // Fallback to local departments data
           const deptList = getDepartmentList();
@@ -55,20 +57,24 @@ export default function ComplaintsPage() {
   }, []);
 
   useEffect(() => {
-    fetchComplaints()
-  }, [filterStatus, filterPriority, filterDepartment])
+    setCurrentPage(1)
+  }, [searchTerm, filterStatus, filterPriority, filterDepartment, itemsPerPage])
 
   useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTerm, filterStatus, filterPriority, filterDepartment])
+    fetchComplaints()
+  }, [filterStatus, filterPriority, filterDepartment, currentPage, deferredSearchTerm])
 
   const fetchComplaints = async () => {
     try {
       setLoading(true)
-      const params = {}
+      const params = {
+        page: currentPage,
+        pageSize: itemsPerPage,
+      }
       if (filterStatus !== 'all') params.status = filterStatus
       if (filterPriority !== 'all') params.priority = filterPriority
       if (filterDepartment !== 'all') params.departmentId = filterDepartment
+      if (deferredSearchTerm.trim()) params.search = deferredSearchTerm.trim()
       
       // If user is complainant, show only their complaints
       if (user?.role === 'complainant') {
@@ -76,11 +82,8 @@ export default function ComplaintsPage() {
       }
       
       const response = await complaintAPI.getComplaints(params)
-      if(filterDepartment !== 'all'){
-      response.data.data = response.data.data.filter((val) => val.departmentId === filterDepartment)
-      }
-      console.log(response.data.data)
-      setComplaints(response.data.data || [])
+      setComplaints(getResponseData(response, []))
+      setPagination(getResponsePagination(response))
     } catch (error) {
       console.error('Failed to fetch complaints:', error)
       addToast('Failed to load complaints', 'error')
@@ -89,16 +92,7 @@ export default function ComplaintsPage() {
     }
   }
 
-  const filteredComplaints = complaints.filter((c) =>
-    c.complaintCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.title.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  const totalPages = Math.ceil(filteredComplaints.length / itemsPerPage)
-  const paginatedComplaints = filteredComplaints.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
+  const totalPages = pagination?.totalPages || 0
 
   const handleClearFilters = () => {
     setSearchTerm('')
@@ -162,12 +156,13 @@ export default function ComplaintsPage() {
           <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search complaints..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-12"
+                  style={{ paddingLeft: '3rem' }}
                 />
               </div>
             </div>
@@ -238,7 +233,7 @@ export default function ComplaintsPage() {
         <CardContent>
           {loading ? (
             <div className="py-8 text-center text-muted-foreground">Loading complaints...</div>
-          ) : filteredComplaints.length === 0 ? (
+          ) : complaints.length === 0 ? (
             <div className="py-12 text-center">
               <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-40" />
               <p className="text-muted-foreground">No complaints found</p>
@@ -270,7 +265,7 @@ export default function ComplaintsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedComplaints.map((complaint) => (
+                    {complaints.map((complaint) => (
                       <TableRow key={complaint.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/complaints/${complaint.id}`)}>
                         <TableCell className="font-mono text-xs sm:text-sm font-semibold">{complaint.complaintCode}</TableCell>
                         <TableCell className="font-medium text-sm">{complaint.title}</TableCell>
@@ -307,7 +302,7 @@ export default function ComplaintsPage() {
 
               {/* Mobile Card View */}
               <div className="md:hidden space-y-3">
-                {paginatedComplaints.map((complaint) => (
+                {complaints.map((complaint) => (
                   <div 
                     key={complaint.id} 
                     onClick={() => navigate(`/complaints/${complaint.id}`)}
@@ -360,17 +355,17 @@ export default function ComplaintsPage() {
                 ))}
               </div>
 
-              {totalPages > 1 && (
-                <div className="mt-6 flex justify-center">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                  />
-                </div>
-              )}
+              <div className="mt-6">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  pageSize={itemsPerPage}
+                  onPageSizeChange={setItemsPerPage}
+                />
+              </div>
               <p className="text-xs text-muted-foreground text-center mt-4">
-                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredComplaints.length)} of {filteredComplaints.length} complaints
+                Showing {complaints.length === 0 ? 0 : ((pagination?.page - 1) * pagination?.pageSize) + 1} to {complaints.length === 0 ? 0 : ((pagination?.page - 1) * pagination?.pageSize) + complaints.length} of {pagination?.totalItems || 0} complaints
               </p>
             </>
           )}
@@ -379,5 +374,3 @@ export default function ComplaintsPage() {
     </div>
   )
 }
-
-

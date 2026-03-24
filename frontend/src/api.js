@@ -47,6 +47,12 @@ export const authAPI = {
   getMe: () => api.get('/auth/me')
 };
 
+export const getResponseData = (response, fallback = null) =>
+  response?.data?.data ?? fallback;
+
+export const getResponsePagination = (response) =>
+  response?.data?.pagination ?? null;
+
 export const complaintAPI = {
   createComplaint: (data, files) => {
     const formData = new FormData();
@@ -107,13 +113,13 @@ export const complaintAPI = {
 };
 
 export const departmentAPI = {
-  getDepartments: () => api.get('/departments'),
+  getDepartments: (params = {}) => api.get('/departments', { params }),
   getDepartmentById: (id) => api.get(`/departments/${id}`),
   getCategoriesByDepartment: (departmentId) => api.get(`/categories?departmentId=${departmentId}`)
 };
 
 export const categoryAPI = {
-  getCategories: () => api.get('/categories'),
+  getCategories: (params = {}) => api.get('/categories', { params }),
   getCategoriesByDepartment: (departmentId) => api.get(`/categories?departmentId=${departmentId}`)
 };
 
@@ -129,14 +135,14 @@ export const userAPI = {
   deleteUser: (id) => api.delete(`/users/${id}`),
   changePassword: (data) => api.post('/users/change-password', data),
   toggleUserStatus: (id) => api.post(`/users/${id}/toggle-status`),
-  getDepartments: () => api.get('/users/departments/list')
+  getDepartments: (params = {}) => api.get('/users/departments/list', { params })
 };
 
 export default api;
 
 export const notificationAPI = {
   getNotifications: (params) => api.get('/notifications', { params }),
-  markAsRead: (id) => api.put(`/notifications/${id}/read`),
-  markAllAsRead: () => api.put('/notifications/read-all'),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllAsRead: () => api.patch('/notifications/read-all'),
   getUnreadCount: () => api.get('/notifications/unread-count')
 };

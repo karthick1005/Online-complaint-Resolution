@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useDeferredValue, useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Tag, Search, Layers } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/api';
+import api, { getResponseData, getResponsePagination } from '@/api';
+import { Pagination } from '@/components/ui/Pagination';
 
 export default function CategoryManagement() {
   const { user } = useAuth();
@@ -12,6 +13,9 @@ export default function CategoryManagement() {
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [pagination, setPagination] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     departmentId: '',
@@ -32,20 +36,32 @@ export default function CategoryManagement() {
     { name: 'Cyan', value: '#06B6D4' },
     { name: 'Indigo', value: '#6366F1' },
   ];
+  const deferredSearchTerm = useDeferredValue(searchTerm);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, itemsPerPage, deferredSearchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, itemsPerPage]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const [categoriesRes, deptsRes] = await Promise.all([
-        api.get('/categories'),
-        api.get('/departments')
+        api.get('/categories', {
+          params: {
+            page: currentPage,
+            pageSize: itemsPerPage,
+            search: deferredSearchTerm.trim() || undefined,
+          }
+        }),
+        api.get('/departments', { params: { pageSize: 100 } })
       ]);
-      setCategories(categoriesRes.data.data || []);
-      setDepartments(deptsRes.data || []);
+      setCategories(getResponseData(categoriesRes, []));
+      setPagination(getResponsePagination(categoriesRes));
+      setDepartments(getResponseData(deptsRes, []));
     } catch (error) {
       addToast('Failed to fetch data', 'error');
     } finally {
@@ -114,10 +130,8 @@ export default function CategoryManagement() {
     setShowModal(true);
   };
 
-  const filteredCategories = categories.filter(cat =>
-    cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cat.department?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const totalPages = pagination?.totalPages || 0;
+  const totalItems = pagination?.totalItems || 0;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 animate-fadeIn">
@@ -143,13 +157,14 @@ export default function CategoryManagement() {
         <div className="modern-card p-6 mb-6">
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search categories..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="modern-input pl-10"
+                className="modern-input pl-12"
+                style={{ paddingLeft: '3rem' }}
               />
             </div>
             <button
@@ -173,7 +188,7 @@ export default function CategoryManagement() {
               </div>
             ))}
           </div>
-        ) : filteredCategories.length === 0 ? (
+        ) : categories.length === 0 ? (
           <div className="modern-card p-12 text-center">
             <Layers className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -190,13 +205,14 @@ export default function CategoryManagement() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {filteredCategories.map((category, index) => (
-              <div
-                key={category.id}
-                className="modern-card-hover p-6 group relative overflow-hidden"
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {categories.map((category, index) => (
+                <div
+                  key={category.id}
+                  className="modern-card-hover p-6 group relative overflow-hidden"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
                 {/* Color accent bar */}
                 <div
                   className="absolute top-0 left-0 right-0 h-1"
@@ -257,9 +273,22 @@ export default function CategoryManagement() {
                     Delete
                   </button>
                 </div>
-              </div>
-            ))}
-          </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-8">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                pageSize={itemsPerPage}
+                onPageSizeChange={setItemsPerPage}
+              />
+              <p className="text-xs text-muted-foreground text-center mt-4">
+                Showing {categories.length === 0 ? 0 : ((pagination?.page - 1) * pagination?.pageSize) + 1} to {categories.length === 0 ? 0 : ((pagination?.page - 1) * pagination?.pageSize) + categories.length} of {totalItems} categories
+              </p>
+            </div>
+          </>
         )}
       </div>
 

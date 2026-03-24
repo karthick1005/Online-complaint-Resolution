@@ -5,7 +5,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { complaintAPI } from '@/api';
+import { complaintAPI, getResponseData } from '@/api';
 import { queryKeys } from '@/lib/queryClient';
 
 /**
@@ -27,7 +27,7 @@ export const useComplaint = (id, options = {}) => {
   return useQuery({
     queryKey: queryKeys.complaint(id),
     queryFn: () => complaintAPI.getComplaintById(id),
-    select: (response) => response.data,
+    select: (response) => getResponseData(response, null),
     enabled: !!id, // Only fetch if ID exists
     ...options,
   });
@@ -41,7 +41,7 @@ export const useComplaintHistory = (id, options = {}) => {
     queryKey: queryKeys.complaintHistory(id),
     queryFn: async () => {
       const response = await complaintAPI.getComplaintById(id);
-      return response.data.history;
+      return getResponseData(response, null)?.history || [];
     },
     enabled: !!id,
     ...options,
@@ -55,7 +55,7 @@ export const useComplaintAttachments = (id, options = {}) => {
   return useQuery({
     queryKey: queryKeys.complaintAttachments(id),
     queryFn: () => complaintAPI.getAttachments(id),
-    select: (response) => response.data,
+    select: (response) => getResponseData(response, []),
     enabled: !!id,
     ...options,
   });
@@ -68,7 +68,7 @@ export const useStaff = (options = {}) => {
   return useQuery({
     queryKey: ['staff'],
     queryFn: () => complaintAPI.getStaff(),
-    select: (response) => response.data,
+    select: (response) => getResponseData(response, []),
     staleTime: 10 * 60 * 1000, // Staff list changes less frequently
     ...options,
   });
