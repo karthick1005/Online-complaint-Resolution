@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { analyticsAPI } from '@/api';
+import { analyticsAPI, getResponseData } from '@/api';
 import { queryKeys } from '@/services/api/queryClient';
 
 /**
@@ -25,7 +25,7 @@ export const useDashboardStats = (options = {}) => {
     queryKey: queryKeys.analytics.dashboard,
     queryFn: async () => {
       const response = await analyticsAPI.getDashboardStats();
-      return response.data;
+      return getResponseData(response, {});
     },
     // Stats are relatively static - cache for 3 minutes
     staleTime: 3 * 60 * 1000,
@@ -54,7 +54,7 @@ export const useAnalytics = (filters = {}, options = {}) => {
     queryKey: queryKeys.analytics.stats(filters),
     queryFn: async () => {
       const response = await analyticsAPI.getDashboardStats(filters);
-      return response.data;
+      return getResponseData(response, {});
     },
     keepPreviousData: true,
     staleTime: 2 * 60 * 1000,

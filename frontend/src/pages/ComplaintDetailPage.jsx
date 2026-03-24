@@ -27,7 +27,7 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
-import { complaintAPI, getResponseData } from "@/api";
+import { complaintAPI, getErrorMessage, getResponseData } from "@/api";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { FeedbackForm } from "@/components/FeedbackForm";
@@ -109,6 +109,8 @@ export default function ComplaintDetailPage() {
 
   // Load timeline file previews
   useEffect(() => {
+    let isActive = true;
+
     const loadTimelineFilePreviews = async () => {
       if (!complaint?.history) return;
 
@@ -135,29 +137,46 @@ export default function ComplaintDetailPage() {
               if (blob && blob instanceof Blob) {
                 const url = URL.createObjectURL(blob);
                 previews[file.id] = url;
-              } else {
-                console.warn("Invalid blob for file:", file.id);
               }
             })
-            .catch(err => console.error("Failed to load timeline preview:", err))
+            .catch(() => {})
         );
         
         await Promise.all(downloadPromises);
       }
       
-      setTimelineFilePreviews(previews);
+      if (isActive) {
+        setTimelineFilePreviews((previousPreviews) => {
+          Object.values(previousPreviews).forEach((url) => URL.revokeObjectURL(url));
+          return previews;
+        });
+      } else {
+        Object.values(previews).forEach((url) => URL.revokeObjectURL(url));
+      }
     };
 
     loadTimelineFilePreviews();
+
+    return () => {
+      isActive = false;
+      setTimelineFilePreviews((previousPreviews) => {
+        Object.values(previousPreviews).forEach((url) => URL.revokeObjectURL(url));
+        return {};
+      });
+    };
   }, [complaint?.history]);
 
   // Fetch staff for assignment dropdown
   useEffect(() => {
     const fetchStaff = async () => {
+      if (!complaint?.departmentId) {
+        setStaffList([]);
+        return;
+      }
+
       try {
         setStaffLoading(true);
-        console.log("Fetching staff for department:", complaint.departmentId);
-        const response = await complaintAPI.getStaff({ departmentId: complaint?.departmentId || "" });
+        const response = await complaintAPI.getStaff({ departmentId: complaint.departmentId });
         setStaffList(getResponseData(response, []));
       } catch (error) {
         console.error("Failed to fetch staff:", error);
@@ -170,12 +189,13 @@ export default function ComplaintDetailPage() {
 
   // Fetch attachments
   useEffect(() => {
+    let isActive = true;
+
     const fetchAttachments = async () => {
       try {
         setAttachmentsLoading(true);
         const response = await complaintAPI.getAttachments(id);
         const attachmentsData = getResponseData(response, []);
-        console.log("Fetched attachments:", attachmentsData);
         setAttachments(attachmentsData);
 
         // Generate previews for images - fetch in parallel
@@ -191,15 +211,20 @@ export default function ComplaintDetailPage() {
                 const url = URL.createObjectURL(fileResponse.data);
                 previews[attachment.id] = url;
               })
-              .catch(err => {
-                console.error("Failed to generate preview for", attachment.id);
-              })
+              .catch(() => {})
           );
           
           await Promise.all(previewPromises);
         }
         
-        setImagePreviews(previews);
+        if (isActive) {
+          setImagePreviews((previousPreviews) => {
+            Object.values(previousPreviews).forEach((url) => URL.revokeObjectURL(url));
+            return previews;
+          });
+        } else {
+          Object.values(previews).forEach((url) => URL.revokeObjectURL(url));
+        }
       } catch (error) {
         console.error("Failed to fetch attachments:", error);
       } finally {
@@ -207,6 +232,14 @@ export default function ComplaintDetailPage() {
       }
     };
     fetchAttachments();
+
+    return () => {
+      isActive = false;
+      setImagePreviews((previousPreviews) => {
+        Object.values(previousPreviews).forEach((url) => URL.revokeObjectURL(url));
+        return {};
+      });
+    };
   }, [id]);
 
   // Fetch comments
@@ -243,9 +276,7 @@ export default function ComplaintDetailPage() {
       setComplaint(getResponseData(response, null));
       setTimeout(() => setAssignmentSuccess(false), 3000);
     } catch (error) {
-      setAssignmentError(
-        error.response?.data?.error || "Failed to assign complaint",
-      );
+      setAssignmentError(getErrorMessage(error, "Failed to assign complaint"));
     } finally {
       setAssignmentLoading(false);
     }
@@ -272,7 +303,7 @@ export default function ComplaintDetailPage() {
       setComplaint(getResponseData(response, null));
       setTimeout(() => setStatusSuccess(false), 3000);
     } catch (error) {
-      setStatusError(error.response?.data?.error || "Failed to update status");
+      setStatusError(getErrorMessage(error, "Failed to update status"));
     } finally {
       setStatusLoading(false);
     }
@@ -334,9 +365,7 @@ export default function ComplaintDetailPage() {
       setFeedbackComment("");
       setTimeout(() => setFeedbackSuccess(false), 3000);
     } catch (error) {
-      setFeedbackError(
-        error.response?.data?.error || "Failed to submit feedback",
-      );
+      setFeedbackError(getErrorMessage(error, "Failed to submit feedback"));
     } finally {
       setFeedbackLoading(false);
     }
@@ -355,9 +384,7 @@ export default function ComplaintDetailPage() {
       setComplaint(getResponseData(response, null));
       setTimeout(() => setReopenSuccess(false), 3000);
     } catch (error) {
-      setReopenError(
-        error.response?.data?.error || "Failed to reopen complaint",
-      );
+      setReopenError(getErrorMessage(error, "Failed to reopen complaint"));
     } finally {
       setReopenLoading(false);
     }
@@ -393,7 +420,7 @@ export default function ComplaintDetailPage() {
       setComments(getResponseData(response, []));
       setTimeout(() => setCommentSuccess(false), 3000);
     } catch (error) {
-      setCommentError(error.response?.data?.error || "Failed to add comment");
+      setCommentError(getErrorMessage(error, "Failed to add comment"));
     } finally {
       setAddingComment(false);
     }
@@ -415,9 +442,7 @@ export default function ComplaintDetailPage() {
       const response = await complaintAPI.getComplaintById(id);
       setComplaint(getResponseData(response, null));
     } catch (error) {
-      setEscalationError(
-        error.response?.data?.error || "Failed to escalate complaint",
-      );
+      setEscalationError(getErrorMessage(error, "Failed to escalate complaint"));
     } finally {
       setEscalationLoading(false);
     }
@@ -433,6 +458,7 @@ export default function ComplaintDetailPage() {
       document.body.appendChild(link);
       link.click();
       link.parentElement.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Failed to download attachment:", error);
     }
@@ -1324,8 +1350,7 @@ export default function ComplaintDetailPage() {
       {/* {(currentUser?.role === 'complainant') && (
         <AttachmentUpload
           onFilesSelected={(files) => {
-            // Handle file selection
-            console.log('Files selected:', files);
+            void files;
             addToast('Files ready to upload', 'success');
           }}
           maxFiles={5}
@@ -1339,7 +1364,7 @@ export default function ComplaintDetailPage() {
           complaintId={complaint.id}
           notes={complaint.internalNotes || []}
           onAddNote={(noteData) => {
-            console.log('Adding note:', noteData);
+            void noteData;
             addToast('Internal note added', 'success');
           }}
           loading={false}
@@ -1352,7 +1377,7 @@ export default function ComplaintDetailPage() {
         <FeedbackForm
           complaintId={complaint.id}
           onSubmit={(feedbackData) => {
-            console.log('Submitting feedback:', feedbackData);
+            void feedbackData;
             addToast('Thank you for your feedback!', 'success');
           }}
           loading={feedbackLoading}

@@ -2,6 +2,7 @@ const express = require('express');
 const analyticsController = require('../controllers/analyticsController');
 const authMiddleware = require('../middleware/authMiddleware');
 const rbacMiddleware = require('../middleware/rbacMiddleware');
+const { asyncHandler } = require('../middleware/errorHandler');
 
 const router = express.Router();
 
@@ -32,7 +33,7 @@ router.get(
   '/dashboard/stats',
   authMiddleware,
   rbacMiddleware(['admin', 'department_manager', 'staff', 'complainant']),
-  analyticsController.getDashboardStats
+  asyncHandler(analyticsController.getDashboardStats)
 );
 
 module.exports = router;

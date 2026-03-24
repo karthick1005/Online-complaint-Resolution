@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/DropdownMenu'
 import { Button } from '@/components/ui/Button'
-import { getResponseData, notificationAPI } from '@/api'
+import { getErrorMessage, getResponseData, notificationAPI } from '@/api'
 import { useAuth } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -38,12 +38,16 @@ export function NotificationDropdown() {
   const fetchNotifications = async () => {
     try {
       setLoading(true)
-      const response = await notificationAPI.getNotifications?.({ page: 1, pageSize: 10 }).catch(() => null)
-      const notifs = getResponseData(response, [])
+      const [notificationsResponse, unreadCountResponse] = await Promise.all([
+        notificationAPI.getNotifications?.({ page: 1, pageSize: 10 }).catch(() => null),
+        notificationAPI.getUnreadCount?.().catch(() => null),
+      ])
+      const notifs = getResponseData(notificationsResponse, [])
+      const unreadData = getResponseData(unreadCountResponse, {})
       setNotifications(notifs)
-      setUnreadCount(notifs.filter(n => !n.isRead)?.length || 0)
+      setUnreadCount(unreadData.unreadCount ?? notifs.filter(n => !n.isRead)?.length ?? 0)
     } catch (err) {
-      console.error('Failed to load notifications')
+      console.error('Failed to load notifications:', getErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -56,7 +60,19 @@ export function NotificationDropdown() {
       setUnreadCount(prev => Math.max(0, prev - 1))
       await notificationAPI.markAsRead?.(id).catch(() => {})
     } catch (err) {
-      console.error('Failed to mark read', err)
+      console.error('Failed to mark read:', getErrorMessage(err))
+      fetchNotifications()
+    }
+  }
+
+  const markAllAsRead = async () => {
+    try {
+      setNotifications(prev => prev.map(notification => ({ ...notification, isRead: true })))
+      setUnreadCount(0)
+      await notificationAPI.markAllAsRead?.()
+    } catch (err) {
+      console.error('Failed to mark all notifications as read:', getErrorMessage(err))
+      fetchNotifications()
     }
   }
 
@@ -95,7 +111,7 @@ export function NotificationDropdown() {
             <p className="text-xs text-slate-500 mt-0.5">You have {unreadCount} unread messages</p>
           </div>
           {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" className="h-8 text-xs text-blue-600 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => {/* mark all as read */}}>
+            <Button variant="ghost" size="sm" className="h-8 text-xs text-blue-600 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={markAllAsRead}>
               Mark all read
             </Button>
           )}

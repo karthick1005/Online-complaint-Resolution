@@ -5,7 +5,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { userAPI, departmentAPI } from '@/api';
+import { getResponseData, userAPI } from '@/api';
 import { queryKeys } from '@/lib/queryClient';
 
 /**
@@ -15,7 +15,7 @@ export const useUsers = (filters = {}, options = {}) => {
   return useQuery({
     queryKey: queryKeys.users(filters),
     queryFn: () => userAPI.getAllUsers(filters),
-    select: (response) => response.data,
+    select: (response) => getResponseData(response, []),
     ...options,
   });
 };
@@ -27,7 +27,7 @@ export const useUser = (id, options = {}) => {
   return useQuery({
     queryKey: queryKeys.user(id),
     queryFn: () => userAPI.getUserById(id),
-    select: (response) => response.data,
+    select: (response) => getResponseData(response, null),
     enabled: !!id,
     ...options,
   });
@@ -40,7 +40,7 @@ export const useDepartments = (options = {}) => {
   return useQuery({
     queryKey: queryKeys.departments(),
     queryFn: () => userAPI.getDepartments(),
-    select: (response) => response.data,
+    select: (response) => getResponseData(response, []),
     staleTime: 15 * 60 * 1000, // Departments change rarely
     ...options,
   });

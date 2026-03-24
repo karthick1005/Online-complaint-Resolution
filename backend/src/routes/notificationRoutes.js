@@ -29,6 +29,7 @@ const router = express.Router();
 const authenticate = require('../middleware/authMiddleware');
 const notificationService = require('../services/notificationService');
 const { sendSuccess } = require('../utils/apiResponse');
+const { asyncHandler } = require('../middleware/errorHandler');
 
 /**
  * @swagger
@@ -65,14 +66,10 @@ const { sendSuccess } = require('../utils/apiResponse');
  *                       items:
  *                         $ref: '#/components/schemas/Notification'
  */
-router.get('/', authenticate, async (req, res) => {
-  try {
-    const notifications = await notificationService.getNotifications(req.user.id, req.query);
-    sendSuccess(res, notifications);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+router.get('/', authenticate, asyncHandler(async (req, res) => {
+  const notifications = await notificationService.getNotifications(req.user.id, req.query);
+  sendSuccess(res, notifications);
+}));
 
 /**
  * @swagger
@@ -99,18 +96,14 @@ router.get('/', authenticate, async (req, res) => {
  *                           type: integer
  *                           example: 4
  */
-router.get('/unread-count', authenticate, async (req, res) => {
-  try {
-    const result = await notificationService.getNotifications(req.user.id, {
-      unreadOnly: 'true',
-      page: 1,
-      pageSize: 1,
-    });
-    sendSuccess(res, { data: { unreadCount: result.pagination.totalItems } });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+router.get('/unread-count', authenticate, asyncHandler(async (req, res) => {
+  const result = await notificationService.getNotifications(req.user.id, {
+    unreadOnly: 'true',
+    page: 1,
+    pageSize: 1,
+  });
+  sendSuccess(res, { data: { unreadCount: result.pagination.totalItems } });
+}));
 
 /**
  * @swagger
@@ -138,14 +131,10 @@ router.get('/unread-count', authenticate, async (req, res) => {
  *       404:
  *         description: Notification not found
  */
-router.patch('/:id/read', authenticate, async (req, res) => {
-  try {
-    await notificationService.markAsRead(req.params.id, req.user.id);
-    sendSuccess(res, { message: 'Notification marked as read' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+router.patch('/:id/read', authenticate, asyncHandler(async (req, res) => {
+  await notificationService.markAsRead(req.params.id, req.user.id);
+  sendSuccess(res, { message: 'Notification marked as read' });
+}));
 
 /**
  * @swagger
@@ -164,13 +153,9 @@ router.patch('/:id/read', authenticate, async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/StandardResponse'
  */
-router.patch('/read-all', authenticate, async (req, res) => {
-  try {
-    await notificationService.markAllAsRead(req.user.id);
-    sendSuccess(res, { message: 'All notifications marked as read' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+router.patch('/read-all', authenticate, asyncHandler(async (req, res) => {
+  await notificationService.markAllAsRead(req.user.id);
+  sendSuccess(res, { message: 'All notifications marked as read' });
+}));
 
 module.exports = router;

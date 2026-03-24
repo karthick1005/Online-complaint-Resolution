@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { userAPI } from '@/api';
+import { getResponseData, userAPI } from '@/api';
 import { queryKeys, invalidateQueries } from '@/services/api/queryClient';
 import { useToast } from '@/context/ToastContext';
 
@@ -17,7 +17,7 @@ export const useUsers = (filters = {}, options = {}) => {
     queryKey: queryKeys.users.list(filters),
     queryFn: async () => {
       const response = await userAPI.getAllUsers(filters);
-      return response.data.users || [];
+      return getResponseData(response, []);
     },
     keepPreviousData: true,
     staleTime: 5 * 60 * 1000,
@@ -41,7 +41,7 @@ export const useUser = (userId, options = {}) => {
     queryKey: queryKeys.users.detail(userId),
     queryFn: async () => {
       const response = await userAPI.getUserById(userId);
-      return response.data;
+      return getResponseData(response, null);
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
@@ -59,7 +59,7 @@ export const useCreateUser = () => {
   return useMutation({
     mutationFn: async (userData) => {
       const response = await userAPI.createUser(userData);
-      return response.data;
+      return getResponseData(response, null);
     },
     onSuccess: () => {
       invalidateQueries.users();
@@ -81,7 +81,7 @@ export const useUpdateUser = () => {
   return useMutation({
     mutationFn: async ({ id, data }) => {
       const response = await userAPI.updateUser(id, data);
-      return response.data;
+      return getResponseData(response, null);
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(variables.id) });
@@ -104,7 +104,7 @@ export const useDeleteUser = () => {
   return useMutation({
     mutationFn: async (userId) => {
       const response = await userAPI.deleteUser(userId);
-      return response.data;
+      return getResponseData(response, null);
     },
     onSuccess: () => {
       invalidateQueries.users();

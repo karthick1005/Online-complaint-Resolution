@@ -29,6 +29,16 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const errorPayload = error.response?.data?.error;
+    if (errorPayload && typeof errorPayload === 'object') {
+      error.response.data = {
+        ...error.response.data,
+        error: errorPayload.message || 'Request failed',
+        errorDetails: errorPayload,
+      };
+      error.message = errorPayload.message || error.message;
+    }
+
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -52,6 +62,9 @@ export const getResponseData = (response, fallback = null) =>
 
 export const getResponsePagination = (response) =>
   response?.data?.pagination ?? null;
+
+export const getErrorMessage = (error, fallback = 'Request failed') =>
+  error?.response?.data?.error || error?.message || fallback;
 
 export const complaintAPI = {
   createComplaint: (data, files) => {
@@ -124,7 +137,7 @@ export const categoryAPI = {
 };
 
 export const analyticsAPI = {
-  getDashboardStats: () => api.get('/analytics/dashboard/stats')
+  getDashboardStats: (params = {}) => api.get('/analytics/dashboard/stats', { params })
 };
 
 export const userAPI = {

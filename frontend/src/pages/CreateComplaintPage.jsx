@@ -46,37 +46,6 @@ export default function CreateComplaintPage() {
     fetchCategories()
   }, [])
 
-  // Auto-detect location on component mount using IP geolocation
-  useEffect(() => {
-    const getIPLocation = async () => {
-      try {
-        setGeoLoading(true)
-        // Using ip-api.com free tier (accurate to city level)
-        const response = await fetch('https://ip-api.com/json/?fields=lat,lon,city,status')
-        const data = await response.json()
-        
-        if (data.status === 'success') {
-          setFormData((prev) => ({
-            ...prev,
-            latitude: data.lat.toFixed(6),
-            longitude: data.lon.toFixed(6),
-            address: data.city || prev.address,
-          }))
-          setGeoError('')
-        } else {
-          console.log('IP geolocation not available, user can manually enter or use GPS')
-        }
-      } catch (error) {
-        console.log('IP geolocation fetch failed:', error)
-        // Fail silently - user can still manually enter location or use GPS button
-      } finally {
-        setGeoLoading(false)
-      }
-    }
-
-    getIPLocation()
-  }, [])
-
   // Get precise location using Geolocation API (GPS)
   const getCurrentLocation = () => {
     setGeoLoading(true)
@@ -105,7 +74,7 @@ export default function CreateComplaintPage() {
           POSITION_UNAVAILABLE: 'GPS location information is unavailable.',
           TIMEOUT: 'Location request timeout. Please try again.',
         }
-        setGeoError(errorMessages[error.code] || 'Failed to get precise location. You can use approximate IP-based location or enter manually.')
+        setGeoError(errorMessages[error.code] || 'Failed to get precise location. You can enter the location manually.')
         setGeoLoading(false)
       },
       {
@@ -300,7 +269,7 @@ export default function CreateComplaintPage() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Location auto-detected using your IP address. Click "Get Precise GPS Location" to get accurate GPS coordinates (requires location permission).
+                Location is only captured when you approve browser GPS access or enter coordinates manually.
               </p>
             </div>
 

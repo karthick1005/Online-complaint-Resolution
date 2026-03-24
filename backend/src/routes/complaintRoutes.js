@@ -32,6 +32,7 @@ const complaintController = require('../controllers/complaintController');
 const authMiddleware = require('../middleware/authMiddleware');
 const rbacMiddleware = require('../middleware/rbacMiddleware');
 const validationMiddleware = require('../middleware/validationMiddleware');
+const { asyncHandler } = require('../middleware/errorHandler');
 
 const router = express.Router();
 
@@ -61,7 +62,7 @@ router.use(authMiddleware);
  *                       items:
  *                         $ref: '#/components/schemas/Category'
  */
-router.get('/meta/categories', complaintController.getCategories);
+router.get('/meta/categories', asyncHandler(complaintController.getCategories));
 
 /**
  * @swagger
@@ -86,7 +87,7 @@ router.get('/meta/categories', complaintController.getCategories);
  *                       items:
  *                         $ref: '#/components/schemas/User'
  */
-router.get('/meta/staff', complaintController.getStaff);
+router.get('/meta/staff', asyncHandler(complaintController.getStaff));
 
 /**
  * @swagger
@@ -149,7 +150,7 @@ router.post(
     body('categoryId').notEmpty()
   ],
   validationMiddleware,
-  complaintController.createComplaint
+  asyncHandler(complaintController.createComplaint)
 );
 
 /**
@@ -206,7 +207,7 @@ router.post(
  *                       items:
  *                         $ref: '#/components/schemas/ComplaintListItem'
  */
-router.get('/', complaintController.getComplaints);
+router.get('/', asyncHandler(complaintController.getComplaints));
 
 /**
  * @swagger
@@ -237,7 +238,7 @@ router.get('/', complaintController.getComplaints);
  *       404:
  *         description: Complaint not found
  */
-router.get('/:id', complaintController.getComplaintById);
+router.get('/:id', asyncHandler(complaintController.getComplaintById));
 
 /**
  * @swagger
@@ -286,7 +287,7 @@ router.put(
   complaintController.uploadMiddleware,
   [body('status').notEmpty()],
   validationMiddleware,
-  complaintController.updateComplaintStatus
+  asyncHandler(complaintController.updateComplaintStatus)
 );
 
 /**
@@ -333,7 +334,7 @@ router.post(
   rbacMiddleware(['department_manager', 'admin']),
   [body('staffId').notEmpty()],
   validationMiddleware,
-  complaintController.assignComplaint
+  asyncHandler(complaintController.assignComplaint)
 );
 
 /**
@@ -375,7 +376,7 @@ router.post(
   '/:id/feedback',
   [body('rating').isInt({ min: 1, max: 5 })],
   validationMiddleware,
-  complaintController.addFeedback
+  asyncHandler(complaintController.addFeedback)
 );
 
 /**
@@ -394,7 +395,7 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/StandardResponse'
  */
-router.get('/:id/attachments', complaintController.getAttachments);
+router.get('/:id/attachments', asyncHandler(complaintController.getAttachments));
 
 /**
  * @swagger
@@ -405,7 +406,7 @@ router.get('/:id/attachments', complaintController.getAttachments);
  *     security:
  *       - bearerAuth: []
  */
-router.get('/attachment/:attachmentId/download', complaintController.downloadAttachment);
+router.get('/attachment/:attachmentId/download', asyncHandler(complaintController.downloadAttachment));
 
 /**
  * @swagger
@@ -416,7 +417,7 @@ router.get('/attachment/:attachmentId/download', complaintController.downloadAtt
  *     security:
  *       - bearerAuth: []
  */
-router.get('/status-file/:fileId/download', complaintController.downloadStatusUpdateFile);
+router.get('/status-file/:fileId/download', asyncHandler(complaintController.downloadStatusUpdateFile));
 
 /**
  * @swagger
@@ -449,7 +450,7 @@ router.post(
   rbacMiddleware(['staff', 'department_manager', 'admin']),
   [body('comment').notEmpty()],
   validationMiddleware,
-  complaintController.addComment
+  asyncHandler(complaintController.addComment)
 );
 
 /**
@@ -467,7 +468,7 @@ router.post(
 router.get(
   '/:id/comments',
   rbacMiddleware(['staff', 'department_manager', 'admin']),
-  complaintController.getComments
+  asyncHandler(complaintController.getComments)
 );
 
 /**
@@ -501,7 +502,7 @@ router.post(
   rbacMiddleware(['department_manager', 'admin']),
   [body('reason').notEmpty()],
   validationMiddleware,
-  complaintController.escalateComplaint
+  asyncHandler(complaintController.escalateComplaint)
 );
 
 /**
@@ -533,7 +534,7 @@ router.post(
   rbacMiddleware(['complainant']),
   [body('reason').optional().isString()],
   validationMiddleware,
-  complaintController.reopenComplaint
+  asyncHandler(complaintController.reopenComplaint)
 );
 
 module.exports = router;
