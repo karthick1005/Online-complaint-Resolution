@@ -90,6 +90,24 @@ npm run dev
    ```
 2. **Hosting**: Deploy the contents of the `dist/` folder to a static host (Netlify, Vercel, Nginx, etc.).
 
+## 🔄 CI/CD
+
+- GitHub Actions workflow: [.github/workflows/ci.yml](/Users/udhayakarthick/Desktop/Developer/pbl/onlinecomplaint/.github/workflows/ci.yml)
+- Frontend deployment target: Vercel
+- Backend deployment target: Render
+- Optional deploy automation is enabled when repository secrets are configured:
+  - `VERCEL_TOKEN`
+  - `VERCEL_ORG_ID`
+  - `VERCEL_PROJECT_ID`
+  - `RENDER_DEPLOY_HOOK_URL`
+
+## 📚 Submission Docs
+
+- Project report: [docs/project-report.md](/Users/udhayakarthick/Desktop/Developer/pbl/onlinecomplaint/docs/project-report.md)
+- Viva notes: [docs/final-viva-notes.md](/Users/udhayakarthick/Desktop/Developer/pbl/onlinecomplaint/docs/final-viva-notes.md)
+- Postman collection: [docs/postman/onlinecomplaint.postman_collection.json](/Users/udhayakarthick/Desktop/Developer/pbl/onlinecomplaint/docs/postman/onlinecomplaint.postman_collection.json)
+- Swagger API docs: available from the backend `/api-docs` route
+
 ## 📁 Project Structure
 
 ```text
