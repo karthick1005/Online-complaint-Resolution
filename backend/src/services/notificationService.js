@@ -25,12 +25,14 @@ const notificationService = {
       100
     );
     const skip = (page - 1) * pageSize;
+    const includeUnreadCount =
+      options.includeUnreadCount === true || options.includeUnreadCount === 'true';
     const where = {
       userId,
       ...(options.unreadOnly === 'true' ? { isRead: false } : {})
     };
 
-    const [notifications, totalItems] = await Promise.all([
+    const queries = [
       prisma.notification.findMany({
         where,
         orderBy: { createdAt: 'desc' },
@@ -38,16 +40,46 @@ const notificationService = {
         take: pageSize
       }),
       prisma.notification.count({ where })
-    ]);
+    ];
+
+    if (includeUnreadCount && options.unreadOnly !== 'true') {
+      queries.push(
+        prisma.notification.count({
+          where: {
+            userId,
+            isRead: false,
+          }
+        })
+      );
+    }
+
+    const [notifications, totalItems, unreadCount] = await prisma.$transaction(queries);
+
+    const pagination = buildPaginationMeta({
+      page,
+      pageSize,
+      totalItems,
+    });
+
+    if (typeof unreadCount === 'number') {
+      pagination.unreadCount = unreadCount;
+    }
 
     return {
       data: notifications,
-      pagination: buildPaginationMeta({
-        page,
-        pageSize,
-        totalItems,
-      })
+      pagination
     };
+  },
+
+  async getUnreadCount(userId) {
+    const unreadCount = await prisma.notification.count({
+      where: {
+        userId,
+        isRead: false,
+      }
+    });
+
+    return { unreadCount };
   },
 
   async markAsRead(id, userId) {

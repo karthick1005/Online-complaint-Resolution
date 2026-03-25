@@ -38,12 +38,13 @@ export function NotificationDropdown() {
   const fetchNotifications = async () => {
     try {
       setLoading(true)
-      const [notificationsResponse, unreadCountResponse] = await Promise.all([
-        notificationAPI.getNotifications?.({ page: 1, pageSize: 10 }).catch(() => null),
-        notificationAPI.getUnreadCount?.().catch(() => null),
-      ])
+      const notificationsResponse = await notificationAPI.getNotifications?.({
+        page: 1,
+        pageSize: 10,
+        includeUnreadCount: true,
+      }).catch(() => null)
       const notifs = getResponseData(notificationsResponse, [])
-      const unreadData = getResponseData(unreadCountResponse, {})
+      const unreadData = notificationsResponse?.data?.pagination || {}
       setNotifications(notifs)
       setUnreadCount(unreadData.unreadCount ?? notifs.filter(n => !n.isRead)?.length ?? 0)
     } catch (err) {

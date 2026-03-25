@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://w8cxdwbc-6969.inc1.devtunnels.ms/api';
+const API_BASE_URL = 'https://onlinecomplaint-eisl.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
