@@ -97,12 +97,8 @@ router.get('/', authenticate, asyncHandler(async (req, res) => {
  *                           example: 4
  */
 router.get('/unread-count', authenticate, asyncHandler(async (req, res) => {
-  const result = await notificationService.getNotifications(req.user.id, {
-    unreadOnly: 'true',
-    page: 1,
-    pageSize: 1,
-  });
-  sendSuccess(res, { data: { unreadCount: result.pagination.totalItems } });
+  const result = await notificationService.getUnreadCount(req.user.id);
+  sendSuccess(res, { data: result });
 }));
 
 /**
