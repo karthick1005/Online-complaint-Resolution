@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AuthProvider } from '@/context/AuthContext'
 import { ThemeProvider } from '@/context/ThemeContext'
@@ -11,6 +12,7 @@ import { LoadingPage } from '@/components/ui/LoadingSpinner'
 
 const LoginPage = lazy(() => import('@/pages/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'))
+const LandingPage = lazy(() => import('@/pages/LandingPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const ComplaintsPage = lazy(() => import('@/pages/ComplaintsPage'))
 const ComplaintDetailPage = lazy(() => import('@/pages/ComplaintDetailPage'))
@@ -49,6 +51,7 @@ function AppRoutes() {
   return (
     <RouteLoader>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
@@ -195,7 +198,6 @@ function AppRoutes() {
           }
         />
 
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/error" element={<ServerErrorPage />} />
         <Route path="/404" element={<NotFoundPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
